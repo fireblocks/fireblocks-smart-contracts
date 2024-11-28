@@ -1,0 +1,11 @@
+{
+	"dependencies": {
+		"hardhat": "^2.22.16"
+	},
+	"devDependencies": {
+		"@nomicfoundation/hardhat-toolbox": "^5.0.0",
+		"@openzeppelin/contracts": "4.9.3",
+		"@openzeppelin/contracts-upgradeable": "4.9.3",
+		"@openzeppelin/contracts-v5": "npm:@openzeppelin/contracts@5.0.2"
+	}
+}
