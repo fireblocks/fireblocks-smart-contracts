@@ -107,7 +107,7 @@ abstract contract AccessListUpgradeableGasless is AccessListUpgradeable, ERC2771
 		override(ContextUpgradeable, ERC2771ContextUpgradeable)
 		returns (address)
 	{
-		return super._msgSender();
+		return ERC2771ContextUpgradeable._msgSender();
 	}
 
 	/**
@@ -123,7 +123,7 @@ abstract contract AccessListUpgradeableGasless is AccessListUpgradeable, ERC2771
 		override(ContextUpgradeable, ERC2771ContextUpgradeable)
 		returns (bytes calldata)
 	{
-		return super._msgData();
+		return ERC2771ContextUpgradeable._msgData();
 	}
 
 	/* solhint-enable func-name-mixedcase */
