@@ -239,7 +239,7 @@ contract GaslessFactory is ERC2771Context, Multicall {
 	 * @return The address of the sender.
 	 */
 	function _msgSender() internal view virtual override(Context, ERC2771Context) returns (address) {
-		return super._msgSender();
+		return ERC2771Context._msgSender();
 	}
 
 	/**
@@ -249,7 +249,7 @@ contract GaslessFactory is ERC2771Context, Multicall {
 	 * @return The data of the transaction.
 	 */
 	function _msgData() internal view virtual override(Context, ERC2771Context) returns (bytes calldata) {
-		return super._msgData();
+		return ERC2771Context._msgData();
 	}
 
 	/**
@@ -259,6 +259,6 @@ contract GaslessFactory is ERC2771Context, Multicall {
 	 * @return uint256 The suffix length of the context.
 	 */
 	function _contextSuffixLength() internal view virtual override(Context, ERC2771Context) returns (uint256) {
-		return super._contextSuffixLength();
+		return ERC2771Context._contextSuffixLength();
 	}
 }
