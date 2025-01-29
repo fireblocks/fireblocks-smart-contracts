@@ -99,7 +99,7 @@ This repository also includes **gasless versions** via the following contracts:
 - [ERC721FGasless](./contracts/gasless-contracts/ERC721FGasless.sol)
 - [ERC1155FGasless](./contracts/gasless-contracts/ERC1155FGasless.sol)
 - [AllowlistGasless](./contracts/gasless-contracts/AccessRegistry/AllowListGasless.sol)
-- [DenylistGasless](./contracts/gasless-contracts/AccessRegistry/DenylistGasless.sol)
+- [DenylistGasless](./contracts/gasless-contracts/AccessRegistry/DenyListGasless.sol)
 
 These variants use the ERC2771 standard and allow users to perform transactions without requiring them to pay gas fees, enhancing usability and accessibility.
 
@@ -140,3 +140,7 @@ npx hardhat compile
 
 ### Verify
 Verify, dont trust. Always make sure your deployed bytecode matches the bytecode in the [artifacts](./artifacts/) directory
+
+## Audits
+
+- [Gasless Audit from OpenZeppelin](./audits/Fireblocks%20Gasless%20Contracts%20Audit.pdf)
