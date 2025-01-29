@@ -132,8 +132,11 @@ contract GaslessFactory is ERC2771Context, Multicall {
 
 		postConfigResults = new bytes[](postConfig.length);
 		// Execute post-deployment configuration
-		for (uint256 i = 0; i < postConfig.length; i++) {
+		for (uint256 i = 0; i < postConfig.length; ) {
 			postConfigResults[i] = _execute(deployedAddress, postConfig[i]);
+			unchecked {
+				++i;
+			}
 		}
 	}
 
@@ -171,8 +174,11 @@ contract GaslessFactory is ERC2771Context, Multicall {
 
 		postConfigResults = new bytes[](postConfig.length);
 		// Execute post-deployment configuration
-		for (uint256 i = 0; i < postConfig.length; i++) {
+		for (uint256 i = 0; i < postConfig.length; ) {
 			postConfigResults[i] = _execute(deployedAddress, postConfig[i]);
+			unchecked {
+				++i;
+			}
 		}
 	}
 
