@@ -228,8 +228,8 @@ contract GaslessFactory is ERC2771Context, Multicall {
 			revert LibErrors.EmptyCallData();
 		}
 
-		emit FunctionExecuted(_msgSender(), target, data, result);
 		result = target.functionCall(data);
+		emit FunctionExecuted(_msgSender(), target, data, result);
 	}
 
 	/**
