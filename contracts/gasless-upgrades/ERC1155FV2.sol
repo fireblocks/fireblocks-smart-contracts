@@ -129,7 +129,7 @@ contract ERC1155FV2 is ERC1155F, ERC2771ContextInitializableUpgradeable {
 		override(ContextUpgradeable, ERC2771ContextUpgradeable)
 		returns (address)
 	{
-		return super._msgSender();
+		return ERC2771ContextUpgradeable._msgSender();
 	}
 
 	/**
@@ -145,6 +145,6 @@ contract ERC1155FV2 is ERC1155F, ERC2771ContextInitializableUpgradeable {
 		override(ContextUpgradeable, ERC2771ContextUpgradeable)
 		returns (bytes calldata)
 	{
-		return super._msgData();
+		return ERC2771ContextUpgradeable._msgData();
 	}
 }

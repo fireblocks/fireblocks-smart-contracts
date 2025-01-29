@@ -122,7 +122,7 @@ contract AllowListV2 is AllowList, ERC2771ContextInitializableUpgradeable {
 		override(ContextUpgradeable, ERC2771ContextUpgradeable)
 		returns (address)
 	{
-		return super._msgSender();
+		return ERC2771ContextUpgradeable._msgSender();
 	}
 
 	/**
@@ -138,6 +138,6 @@ contract AllowListV2 is AllowList, ERC2771ContextInitializableUpgradeable {
 		override(ContextUpgradeable, ERC2771ContextUpgradeable)
 		returns (bytes calldata)
 	{
-		return super._msgData();
+		return ERC2771ContextUpgradeable._msgData();
 	}
 }

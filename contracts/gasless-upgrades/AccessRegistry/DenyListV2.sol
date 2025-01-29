@@ -123,7 +123,7 @@ contract DenyListV2 is DenyList, ERC2771ContextInitializableUpgradeable {
 		override(ContextUpgradeable, ERC2771ContextUpgradeable)
 		returns (address)
 	{
-		return super._msgSender();
+		return ERC2771ContextUpgradeable._msgSender();
 	}
 
 	/**
@@ -139,6 +139,6 @@ contract DenyListV2 is DenyList, ERC2771ContextInitializableUpgradeable {
 		override(ContextUpgradeable, ERC2771ContextUpgradeable)
 		returns (bytes calldata)
 	{
-		return super._msgData();
+		return ERC2771ContextUpgradeable._msgData();
 	}
 }

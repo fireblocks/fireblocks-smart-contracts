@@ -132,8 +132,11 @@ contract GaslessFactory is ERC2771Context, Multicall {
 
 		postConfigResults = new bytes[](postConfig.length);
 		// Execute post-deployment configuration
-		for (uint256 i = 0; i < postConfig.length; ++i) {
+		for (uint256 i = 0; i < postConfig.length; ) {
 			postConfigResults[i] = _execute(deployedAddress, postConfig[i]);
+			unchecked {
+				++i;
+			}
 		}
 	}
 
@@ -171,8 +174,11 @@ contract GaslessFactory is ERC2771Context, Multicall {
 
 		postConfigResults = new bytes[](postConfig.length);
 		// Execute post-deployment configuration
-		for (uint256 i = 0; i < postConfig.length; ++i) {
+		for (uint256 i = 0; i < postConfig.length; ) {
 			postConfigResults[i] = _execute(deployedAddress, postConfig[i]);
+			unchecked {
+				++i;
+			}
 		}
 	}
 
@@ -222,8 +228,8 @@ contract GaslessFactory is ERC2771Context, Multicall {
 			revert LibErrors.EmptyCallData();
 		}
 
-		emit FunctionExecuted(_msgSender(), target, data, result);
 		result = target.functionCall(data);
+		emit FunctionExecuted(_msgSender(), target, data, result);
 	}
 
 	/**
@@ -233,7 +239,7 @@ contract GaslessFactory is ERC2771Context, Multicall {
 	 * @return The address of the sender.
 	 */
 	function _msgSender() internal view virtual override(Context, ERC2771Context) returns (address) {
-		return super._msgSender();
+		return ERC2771Context._msgSender();
 	}
 
 	/**
@@ -243,7 +249,7 @@ contract GaslessFactory is ERC2771Context, Multicall {
 	 * @return The data of the transaction.
 	 */
 	function _msgData() internal view virtual override(Context, ERC2771Context) returns (bytes calldata) {
-		return super._msgData();
+		return ERC2771Context._msgData();
 	}
 
 	/**
@@ -253,6 +259,6 @@ contract GaslessFactory is ERC2771Context, Multicall {
 	 * @return uint256 The suffix length of the context.
 	 */
 	function _contextSuffixLength() internal view virtual override(Context, ERC2771Context) returns (uint256) {
-		return super._contextSuffixLength();
+		return ERC2771Context._contextSuffixLength();
 	}
 }
