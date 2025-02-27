@@ -143,4 +143,11 @@ Verify, dont trust. Always make sure your deployed bytecode matches the bytecode
 
 ## Audits
 
+- [Fireblocks ERC20 Audit](./audits/Fireblocks%20ERC20%20Audit.pdf)
+- [Fireblocks ERC721 Audit](./audits/Fireblocks%20ERC721%20Audit.pdf)
+- [Fireblocks ERC1155 Audit](./audits/Fireblocks%20ERC1155%20Audit.pdf)
 - [Gasless Audit from OpenZeppelin](./audits/Fireblocks%20Gasless%20Contracts%20Audit.pdf)
+
+## Security
+
+- [Security Policy](./SECURITY.md)
