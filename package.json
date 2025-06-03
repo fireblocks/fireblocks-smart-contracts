@@ -1,11 +1,18 @@
 {
 	"dependencies": {
-		"hardhat": "^2.22.16"
+		"hardhat": "^2.24.1"
 	},
 	"devDependencies": {
 		"@nomicfoundation/hardhat-toolbox": "^5.0.0",
 		"@openzeppelin/contracts": "4.9.3",
 		"@openzeppelin/contracts-upgradeable": "4.9.3",
-		"@openzeppelin/contracts-v5": "npm:@openzeppelin/contracts@5.1.0"
+		"@openzeppelin/contracts-v5": "npm:@openzeppelin/contracts@5.1.0",
+		"prettier": "^3.0.0",
+		"prettier-plugin-solidity": "^2.0.0"
+	},
+	"scripts": {
+		"format": "prettier --plugin=prettier-plugin-solidity --write .",
+		"format:sol": "prettier --plugin=prettier-plugin-solidity --write 'contracts/**/*.sol'",
+		"format:ts": "prettier --write '**/*.ts'"
 	}
 }
