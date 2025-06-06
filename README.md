@@ -16,6 +16,7 @@ Welcome to the Fireblocks Smart Contracts repository. This repository is built u
   - [VestingVault](#vestingvault) (⚠️ in audit process)
   - [UUPS Proxy](#uups-proxy)
   - [Trusted Forwarder](#trusted-forwarder)
+  - [Fungible LayerZero Adapter](#fungible-layerzero-adapter)
 - [Gasless Variants](#gasless-variants)
 - [Gasless Upgrades](#gasless-upgrades)
 - [Getting Started](#getting-started)
@@ -105,6 +106,10 @@ Provides upgradeable functionality for all smart contracts using the UUPS proxy 
 
 Enables seamless meta-transactions, supporting off-chain signing and gasless interactions with Fireblocks token contracts.
 
+### [Fungible LayerZero Adapter](./contracts/bridge-adapter/FungibleLayerZeroAdapter.sol)
+
+An adapter for integrating ERC20 tokens with LayerZero, enabling cross-chain fungible token transfers.
+
 ---
 
 ## Gasless Variants
@@ -146,7 +151,7 @@ Clone the repository and install dependencies:
 ```bash
 git clone https://github.com/fireblocks/fireblocks-smart-contracts.git
 cd fireblocks-smart-contracts
-npm install
+npm install --force
 ```
 
 ### Compile
