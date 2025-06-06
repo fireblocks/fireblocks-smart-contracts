@@ -128,4 +128,9 @@ library LibErrors {
      * @param id The invalid ID.
      */
     error NotFound(uint256 id);
+
+	/**
+	 * @dev Indicates that the account does not have a balance to operate on.
+	 */
+	error NoBalance();
 }
