@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity 0.8.20;
+pragma solidity ^0.8.20;
 
 /**
  * @title Errors Library
@@ -116,4 +116,9 @@ library LibErrors {
 	 * @param version The version that the contract should be initialized with.
 	 */
 	error OnlyVersion(uint8 version);
+
+	/**
+	 * @dev Indicates that the account does not have a balance to operate on.
+	 */
+	error NoBalance();
 }
