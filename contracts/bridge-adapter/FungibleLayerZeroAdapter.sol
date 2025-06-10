@@ -28,7 +28,7 @@ import {IERC20MintableBurnable} from "./interfaces/IERC20MintableBurnable.sol";
 import {LibErrors} from "../library/Errors/LibErrors.sol";
 
 /**
- * @title FireblocksOFTAdapter
+ * @title FungibleLayerZeroAdapter
  * @author Fireblocks
  * @notice This contract is an adapter for an ERC-20 token to LayerZero OFT (Omnichain Fungible Token) functionality for
    cross-chain token bridging.
@@ -56,7 +56,7 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
  * - The peer for the destination chain must exist
  * - Assumes lossless 1:1 transfers (no fees on token transfer)
  */
-contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, SalvageCapable {
+contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, SalvageCapable {
 	using SafeERC20 for IERC20MintableBurnable;
 	using EnumerableMap for EnumerableMap.AddressToUintMap;
 
@@ -160,7 +160,7 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	/// Functions
 
 	/**
-	 * @notice Constructor for the FireblocksOFTAdapter contract.
+	 * @notice Constructor for the FungibleLayerZeroAdapter contract.
 	 * @dev Initializes the OFTAdapter contract with token and LayerZero configuration.
 	 * @param _token The address of the ERC-20 token that this adapter is used for.
 	 * @param _lzEndpoint The LayerZero endpoint contract address.
@@ -286,7 +286,7 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	 * - The `embargoedAddress` must have a non-zero balance embargoed balance in the `_embargoLedger`.
 	 * - The caller must have the `EMBARGO_ROLE` to execute this function.
 	 *
-	 * This function emits an {EmbargoRelease} event as a part of {FireblocksOFTAdapter}.{_recoverEmbargoedTokens}
+	 * This function emits an {EmbargoRelease} event as a part of {FungibleLayerZeroAdapter}.{_recoverEmbargoedTokens}
 	 * implementation.
 	 *
 	 * @param embargoedAddress The address of the account that had embargoed balance locked in this contract.
@@ -345,7 +345,7 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	 * Calling Conditions:
 	 * - The `embargoedAddress` must have a non-zero balance embargoed balance in the `_embargoLedger`.
 	 *
-	 * This function emits an {EmbargoRelease} event as a part of {FireblocksOFTAdapter}.{_recoverEmbargoedTokens}
+	 * This function emits an {EmbargoRelease} event as a part of {FungibleLayerZeroAdapter}.{_recoverEmbargoedTokens}
 	 * implementation.
 	 *
 	 * @param embargoedAddress The address of the account that had embargoed balance locked in this contract.
