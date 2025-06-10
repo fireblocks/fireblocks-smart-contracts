@@ -116,4 +116,9 @@ library LibErrors {
 	 * @param version The version that the contract should be initialized with.
 	 */
 	error OnlyVersion(uint8 version);
+
+	/**
+	 * @dev Indicates that the account does not have a balance to operate on.
+	 */
+	error NoBalance();
 }
