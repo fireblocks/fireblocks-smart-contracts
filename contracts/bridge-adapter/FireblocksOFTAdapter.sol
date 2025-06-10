@@ -15,8 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.8.22;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC-20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC-20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EnumerableMap} from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import {IOFT, OFTCore} from "@layerzerolabs/oft-evm/contracts/OFTCore.sol";
@@ -30,9 +30,9 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
 /**
  * @title FireblocksOFTAdapter
  * @author Fireblocks
- * @notice This contract adapts an ERC20 token to LayerZero OFT (Omnichain Fungible Token) functionality for cross-chain
- * token bridging.
- * @dev This contract serves as an adapter for an ERC20 token, providing integration with LayerZero protocol
+ * @notice This contract is an adapter for an ERC-20 token to LayerZero OFT (Omnichain Fungible Token) functionality for
+   cross-chain token bridging.
+ * @dev This contract serves as an adapter for an ERC-20 token, providing integration with LayerZero protocol
  * to enable cross-chain token bridging. When a user initiates a bridge transaction, this contract:
  * 1. Transfers tokens from the user to itself (requires user allowance)
  * 2. Burns the tokens
@@ -40,11 +40,13 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
  *
  * Configuration:
  *
- * - Contract requires the following parameters to be set during deployment:
- *   - token address: The address of the token this contract will interact with
+ * - This contract requires the following parameters to be set during deployment:
+ *   - Token address: The address of the token to be bridged
  *   - LayerZero endpoint: The address of the LayerZero protocol endpoint that facilitates cross-chain messaging
- *   - delegate address: The address authorized to perform privileged operations on behalf of this contract
- * - Contract must be granted MINTER_ROLE and BURNER_ROLE on the token contract
+ *   - Delegate address: The address authorized to perform privileged operations on behalf of this contract
+ *   - Default admin: The address that will be granted the DEFAULT_ADMIN_ROLE, allowing it to manage roles and permissions
+ *   - Pauser: The address that will be granted the PAUSER_ROLE, allowing it to pause and unpause the contract
+ * - This contract must be granted the minting and burning privileges from the token to be bridged.
  * - Peers must be properly configured across chains to establish trusted relationships
  *
  * Preconditions for bridging:
@@ -61,9 +63,9 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	/// Types
 
 	/**
-	 * @notice Tuple type to represent a pair of endpoint ID and peer address.
-	 * @dev Tuple type to represent a pair of endpoint ID and peer address.
-	 * @param eid The endpoint ID
+	 * @notice Struct type to represent a pair of endpoint ID and peer address.
+	 * @dev Struct type to represent a pair of endpoint ID and peer address.
+	 * @param endpointId The endpoint ID
 	 * @param peer The peer address
 	 */
 	struct PeerInfo {
@@ -111,7 +113,7 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	/// State
 
 	/**
-	 * @notice The ERC20 token adapted for OFT functionality.
+	 * @notice The ERC-20 token adapted for OFT functionality.
 	 * @dev This token is the underlying asset that will be bridged across chains.
 	 */
 	IERC20MintableBurnable internal immutable innerToken;
@@ -146,7 +148,7 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	event EmbargoLock(address indexed recipient, bytes bError, uint256 amount);
 
 	/**
-	 * @notice This event is emitted when enbargoed tokens are released.
+	 * @notice This event is emitted when embargoed tokens are released.
 	 *
 	 * @param caller The (indexed) address of the caller
 	 * @param embargoedAccount The (indexed) address of the account that had embargoed balance locked in this contract.
@@ -161,9 +163,9 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	 * @notice Constructor for the FireblocksOFTAdapter contract.
 	 * @dev Initializes the OFTAdapter contract with token and LayerZero configuration.
 	 * @param _token The address of the ERC-20 token that this adapter is used for.
-	 * @param _lzEndpoint The LayerZero endpoint address.
-	 * @param _delegate The delegate capable of making OApp configurations inside of the endpoint. This account will
-	 * be granted the CONTRACT_ADMIN_ROLE.
+	 * @param _lzEndpoint The LayerZero endpoint contract address.
+	 * @param _delegate The delegate capable of making OApp configurations regarding this contract on the LayerZero 
+	 * endpoint contract. This account will be granted the CONTRACT_ADMIN_ROLE.
 	 * @param defaultAdmin The address to be granted the DEFAULT_ADMIN_ROLE.
 	 * @param pauser The address to be granted the PAUSER_ROLE.
 	 */
@@ -176,27 +178,25 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	) OFTCore(IERC20Metadata(_token).decimals(), _lzEndpoint, _delegate) RoleBasedOwnable() PauseCapable() {
 		innerToken = IERC20MintableBurnable(_token);
 
-		// grant admn roles
+		// grant admin roles
 		_grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
 		_grantRole(CONTRACT_ADMIN_ROLE, _delegate);
 		_grantRole(PAUSER_ROLE, pauser);
 	}
 
 	/**
-	 * @dev This is a function used to retrieve the address of the underlying ERC20 implementation.
-	 * @dev Since this contract is an OFTAdapter for a token and not an OFT token itself, address(this) and erc20 are NOT the same address.
-	 * @return The address of the adapted ERC-20 token.
+	 * @dev This is a function used to retrieve the address of the underlying ERC-20 implementation.
+	 * @dev Since this contract is an OFTAdapter for a token and not an OFT token itself, address(this) and ERC-20 are
+	 * NOT the same address.
+	 * @return The address of the being ERC-20 token.
 	 */
 	function token() public view returns (address) {
 		return address(innerToken);
 	}
 
 	/**
-	 * @notice This function indicates whether the OFT contract requires approval of the 'token()' to mint and burn.
+	 * @notice This function indicates whether the OFT contract requires approval of the 'token()' to send tokens.
 	 * @dev In non-default OFTAdapter contracts with something like mint and burn privileges, it would NOT need approval.
-	 * Since this is an adapter to an ERC20 token contract, it requires mint and burn privileges on the token contract.
-	 * The contract must be granted MINTER_ROLE and BURNER_ROLE on the innerToken.
-	 *
 	 * @return Always true, as this adapter requires approval for minting and burning.
 	 */
 	function approvalRequired() external pure virtual returns (bool) {
@@ -205,7 +205,7 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 
 	/**
 	 * @notice This function lists all configured peers with their endpoint IDs.
-	 * @dev This function returns an array of tuples containing endpoint IDs and their corresponding peer addresses.
+	 * @dev This function returns an array of struct containing endpoint IDs and their corresponding peer addresses.
 	 * It's designed for off-chain query support and adapter mesh introspection.
 	 * This enumeration function simplifies backend tasks by providing a complete view of the adapter mesh.
 	 *
