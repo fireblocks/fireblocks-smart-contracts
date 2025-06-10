@@ -376,6 +376,8 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	 * In such cases, this method would need to be overridden to accurately track the actual tokens received
 	 * by implementing pre-transfer and post-transfer balance checks.
 	 *
+	 * This function emits a {OFTSent} event as a part of {OAppCore}.{_send} implementation.
+	 *
 	 * @return amountSentLD The amount sent from the source chain.
 	 * @return amountReceivedLD The amount to be received on the destination chain after any fees, deductions or potential conversions.
 	 */
@@ -406,6 +408,8 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	 * If the underlying token implements any mechanism that modifies transfer amounts (such as fees or rebasing),
 	 * this implementation will need to be overridden with pre/post balance checks to accurately calculate
 	 * the actual amount received.
+	 *
+	 * This function emits an {OFTReceived} event as a part of {OAppCore}.{_lzReceive} implementation.
 	 * @return amountReceivedLD The actual amount of tokens received by the recipient.
 	 */
 	function _credit(
