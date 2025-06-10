@@ -559,20 +559,37 @@ contract FireblocksOFTAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Salvag
 	/**
 	 * @notice This is a function that applies any validations required to allow salvageERC20.
 	 *
-	 * It adds a check to ensure that the `salvagedToken` is not the same as `innerToken`. The `salvageERC20` function
-	 * can't be used to salvage the `innerToken`, as only accounts with `EMBARGO_ROLE` can manage the `innerToken`
-	 * embargoed on this contract.
+	 * It adds a check to ensure that the amount of `salvagedToken` is not more than the balance of the `innerToken`
+	 * minus the total embargoed balance in the `_embargoLedger`. This is to prevent salvaging more tokens than the
+	 * contract can actually send out, this only applies when the `salvagedToken` is the same as the `innerToken`.
 	 *
 	 * @dev Reverts:
-	 *  - if `salvagedToken` is the same as `innerToken`
+	 *  - if `salvagedToken` is the same as `innerToken` and the amount is greater than the balance of the
+	 *    `innerToken` minus the total embargoed balance in the `_embargoLedger`.
 	 *  - as per `_authorizeSalvage()`
 	 *
 	 * @param salvagedToken The address of the token being salvaged.
+	 * @param amount The amount of tokens being salvaged.
 	 */
-	function _authorizeSalvageERC20(address salvagedToken) internal virtual override {
+	function _authorizeSalvageERC20(address salvagedToken, uint256 amount) internal virtual override {
 		_authorizeSalvage();
 		if (salvagedToken == address(innerToken)) {
-			revert LibErrors.UnauthorizedTokenManagement();
+			uint256 totalEmbargoedBalance = 0;
+			address[] memory accounts = _embargoLedger.keys();
+			for (uint256 i = 0; i < accounts.length; ) {
+				(, uint256 _amount) = _embargoLedger.tryGet(accounts[i]);
+				totalEmbargoedBalance += _amount;
+				unchecked {
+					++i;
+				}
+			}
+			if (
+				innerToken.balanceOf(address(this)) <= totalEmbargoedBalance ||
+				amount > innerToken.balanceOf(address(this)) - totalEmbargoedBalance
+			) {
+				// If the contract balance is not greater than the sum of embargoed balances, revert
+				revert LibErrors.UnauthorizedTokenManagement();
+			}
 		}
 	}
 

@@ -73,7 +73,7 @@ abstract contract SalvageCapable is Context {
 	 * @param amount The amount to be salvaged.
 	 */
 	function salvageERC20(IERC20 token, uint256 amount) external virtual {
-		_authorizeSalvageERC20(address(token));
+		_authorizeSalvageERC20(address(token), amount);
 		emit TokenSalvaged(_msgSender(), address(token), amount);
 		_withdrawERC20(token, _msgSender(), amount);
 	}
@@ -144,8 +144,9 @@ abstract contract SalvageCapable is Context {
 	 * @dev Override this function to implement RBAC control.
 	 *
 	 * @param salvagedToken The address of the token being salvaged.
+	 * @param amount The amount of the token being salvaged.
 	 */
-	function _authorizeSalvageERC20(address salvagedToken) internal virtual;
+	function _authorizeSalvageERC20(address salvagedToken, uint256 amount) internal virtual;
 
 	/**
 	 * @notice This function is designed to be overridden in inheriting contracts.
