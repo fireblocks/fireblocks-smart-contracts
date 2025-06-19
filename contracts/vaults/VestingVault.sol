@@ -51,7 +51,7 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
  *        which would break vesting accounting as the contract tracks fixed amounts at schedule creation. Using
  *        rebasing tokens will lead to potential loss of funds.
  *      - Maximum of (2^32 - 1) vesting schedules.
- * 
+ *
  * @custom:security-contact support@fireblocks.com
  */
 contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, IVestingVaultErrors {
@@ -207,7 +207,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     function createSchedule(
         address beneficiary,
         bool isCancellable,
-        VestingPeriod[] calldata periods
+        VestingPeriodParam[] calldata periods
     ) external override onlyRole(VESTING_ADMIN_ROLE) returns (uint32 scheduleId) {
         // Validate inputs
         if (beneficiary == address(0)) revert LibErrors.InvalidAddress();
@@ -225,7 +225,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         uint256 totalAmount = 0;
         uint256 periodsLength = periods.length;
         for (uint256 i = 0; i < periodsLength; ) {
-            VestingPeriod calldata period = periods[i];
+            VestingPeriodParam calldata period = periods[i];
 
             // Validate period amount
             if (period.amount == 0) revert LibErrors.ZeroAmount();
@@ -243,8 +243,16 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
                 revert IVestingVaultErrors.InvalidStartTime(i, period.startPeriod);
             }
 
+            VestingPeriod memory newPeriod = VestingPeriod({
+                startPeriod: period.startPeriod,
+                endPeriod: period.endPeriod,
+                cliff: period.cliff,
+                amount: period.amount,
+                claimedAmount: 0
+            });
+
             // Store period and accumulate total amount
-            newSchedule.periods.push(period);
+            newSchedule.periods.push(newPeriod);
             totalAmount += period.amount;
             unchecked {
                 ++i;
