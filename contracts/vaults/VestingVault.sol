@@ -142,7 +142,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Calling Conditions:
      *
-     * - `vestingToken_` must have bytecode set and must implement the `decimals()` function of ERC20, with a
+     * - `vestingToken_` must have bytecode set
+     * - `vestingToken_` must implement the `decimals()` function of ERC20, with a
      *   return value > 0
      * - `defaultAdmin` must not be the zero address
      * - `vestingAdmin` must not be the zero address
@@ -160,7 +161,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         require(vestingAdmin != address(0), LibErrors.InvalidAddress());
 
         // Validate that vestingToken_ passes common ERC20 implementation checks
-        require(vestingToken_.code.length > 0, LibErrors.InvalidImplementation());
+        require(vestingToken_.code.length > 0, LibErrors.AddressEmptyCode(vestingToken_));
         // Check if decimals() function exists and returns > 0
         (bool success, bytes memory data) = vestingToken_.staticcall(abi.encodeWithSignature("decimals()"));
         require(success && data.length > 0, LibErrors.InvalidImplementation());

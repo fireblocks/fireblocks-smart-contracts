@@ -30,6 +30,11 @@ library LibErrors {
     error AccountUnauthorized(address account);
 
     /**
+     * @dev There's no code at `target` (it is not a contract).
+     */
+    error AddressEmptyCode(address target);
+
+    /**
      * @notice Thrown when a Renounce Role is called.
      */
     error RenounceRoleDisabled();
