@@ -13,6 +13,7 @@ Welcome to the Fireblocks Smart Contracts repository. This repository is built u
   - [ERC1155F](#erc1155f)
   - [Allowlist](#allowlist)
   - [Denylist](#denylist)
+  - [VestingVault](#vestingvault) (⚠️ in audit process)
   - [UUPS Proxy](#uups-proxy)
   - [Trusted Forwarder](#trusted-forwarder)
 - [Gasless Variants](#gasless-variants)
@@ -80,6 +81,21 @@ A utility contract for managing access control via a denylist of restricted addr
 - Integration with Fireblocks ERC-20F, ERC-721F, and ERC-1155F contracts
 - Shared usage across multiple token contracts
 - Upgradeability via the UUPS proxy pattern
+
+### [VestingVault](./contracts/vaults/VestingVault.sol)
+
+> [!WARNING]
+> **Audit in Progress**
+>
+> This contract is currently undergoing a security audit and is **not suitable for production use** until the audit is complete.
+
+A non-upgradeable contract for managing token vesting schedules with:
+
+- Multi-period vesting schedules with linear vesting and cliff options
+- Global vesting mode for synchronized schedule starts across all beneficiaries
+- Granular claim/release operations at beneficiary, schedule, or period level
+- Schedule cancellation with pro-rated vesting up to cancellation time
+- Role-based access control with VESTING_ADMIN and FORFEITURE_ADMIN roles
 
 ### [UUPS Proxy](./contracts/library/Proxy/Proxy.sol)
 
