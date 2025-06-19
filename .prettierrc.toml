@@ -1,0 +1,31 @@
+# .prettierrc.toml
+
+# Adapted from https://github.com/typescript-eslint/typescript-eslint/.prettierrc.json
+arrowParens = "avoid"
+bracketSpacing = true
+endOfLine = "lf"
+bracketSameLine = false
+jsxSingleQuote = false
+printWidth = 120
+proseWrap = "preserve"
+quoteProps = "as-needed"
+semi = true
+singleQuote = false
+tabWidth = 2
+trailingComma = "all"
+useTabs = false
+svelteSortOrder = "options-scripts-styles-markup"
+svelteBracketNewLine = false
+
+# START Solidity files config
+# From https://github.com/prettier-solidity/prettier-plugin-solidity#readme
+[[overrides]]
+files = "*.sol"
+[overrides.options]
+parser = "slang"
+printWidth = 120
+tabWidth = 4
+useTabs = false
+singleQuote = false
+bracketSpacing = false
+# END Solidity files config
