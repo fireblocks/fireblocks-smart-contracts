@@ -355,10 +355,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * Emits {TokenRelease} events for each schedule and period with claimable tokens.
      */
     function claim() external override {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+        _validateGlobalVestingStatus();
 
         address beneficiary = _msgSender();
         uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
@@ -422,10 +419,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @param scheduleId The ID of the schedule to claim from
      */
     function claim(uint256 scheduleId) external override {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+        _validateGlobalVestingStatus();
 
         Schedule storage schedule = scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
@@ -476,10 +470,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @param periodIndex The index of the period within the schedule
      */
     function claim(uint256 scheduleId, uint256 periodIndex) external override {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+        _validateGlobalVestingStatus();
 
         Schedule storage schedule = scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
@@ -526,10 +517,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @param beneficiary The beneficiary to release tokens for
      */
     function release(address beneficiary) external override onlyRole(VESTING_ADMIN_ROLE) {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+        _validateGlobalVestingStatus();
 
         uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
         uint256 scheduleCount = scheduleIds.length;
@@ -594,10 +582,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @param scheduleId The ID of the schedule to release from
      */
     function release(uint256 scheduleId) external override onlyRole(VESTING_ADMIN_ROLE) {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+        _validateGlobalVestingStatus();
 
         Schedule storage schedule = scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
@@ -648,10 +633,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @param periodIndex The index of the period within the schedule
      */
     function release(uint256 scheduleId, uint256 periodIndex) external override onlyRole(VESTING_ADMIN_ROLE) {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+        _validateGlobalVestingStatus();
 
         Schedule storage schedule = scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
@@ -1146,5 +1128,17 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
 
         // Reduce the committed tokens constraint by the released amount
         committedTokens -= amount;
+    }
+
+    /// Internal Functions - Global Vesting Status checks
+
+    /**
+     * @dev Validates that global vesting has started if global vesting mode is enabled
+     * @notice Reverts if global vesting mode is enabled but not yet started
+     */
+    function _validateGlobalVestingStatus() internal view {
+        if (globalVestingMode && !globalVestingStarted) {
+            revert IVestingVaultErrors.GlobalVestingNotStarted();
+        }
     }
 }
