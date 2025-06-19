@@ -51,7 +51,7 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
  *        which would break vesting accounting as the contract tracks fixed amounts at schedule creation. Using
  *        rebasing tokens will lead to potential loss of funds.
  *      - Maximum of (2^32 - 1) vesting schedules.
- * 
+ *
  * @custom:security-contact support@fireblocks.com
  */
 contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, IVestingVaultErrors {
