@@ -380,7 +380,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             // Process each period in the schedule
             uint256 numPeriods = schedule.periods.length;
             for (uint256 j = 0; j < numPeriods; ) {
-                uint256 claimableAmount = _claim(schedule, scheduleId, j);
+                uint256 claimableAmount = _claim(schedule, j);
                 totalClaimable += claimableAmount;
                 unchecked {
                     ++j;
@@ -433,7 +433,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         uint256 numPeriods = schedule.periods.length;
         // Process each period in the schedule
         for (uint256 i = 0; i < numPeriods; ) {
-            uint256 claimableAmount = _claim(schedule, scheduleId, i);
+            uint256 claimableAmount = _claim(schedule, i);
             totalClaimable += claimableAmount;
             unchecked {
                 ++i;
@@ -485,7 +485,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             IVestingVaultErrors.InvalidVestingPeriodIndex(scheduleId, periodIndex)
         );
         // Process the specific period
-        uint256 claimableAmount = _claim(schedule, scheduleId, periodIndex);
+        uint256 claimableAmount = _claim(schedule, periodIndex);
         if (claimableAmount == 0) {
             revert IVestingVaultErrors.NoTokensToClaim();
         }
@@ -542,7 +542,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             // Process each period in the schedule
             uint256 numPeriods = schedule.periods.length;
             for (uint256 j = 0; j < numPeriods; ) {
-                uint256 releasableAmount = _claim(schedule, scheduleId, j);
+                uint256 releasableAmount = _claim(schedule, j);
                 totalReleasable += releasableAmount;
                 unchecked {
                     ++j;
@@ -595,7 +595,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
 
         // Process each period in the schedule
         for (uint256 i = 0; i < numPeriods; ) {
-            uint256 releasableAmount = _claim(schedule, scheduleId, i);
+            uint256 releasableAmount = _claim(schedule, i);
             totalReleasable += releasableAmount;
             unchecked {
                 ++i;
@@ -646,7 +646,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             IVestingVaultErrors.InvalidVestingPeriodIndex(scheduleId, periodIndex)
         );
         // Process the specific period
-        uint256 releasableAmount = _claim(schedule, scheduleId, periodIndex);
+        uint256 releasableAmount = _claim(schedule, periodIndex);
 
         if (releasableAmount == 0) {
             revert IVestingVaultErrors.NoTokensToClaim();
@@ -702,7 +702,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
                 continue;
             }
             // Claim any vested amount
-            uint256 claimableAmount = _claim(schedule, scheduleId, i);
+            uint256 claimableAmount = _claim(schedule, i);
             claimAmount += claimableAmount;
 
             // Calculate unvested amount (total - already claimed)
@@ -992,14 +992,9 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * Emits a {TokenRelease} event.
      *
      * @param schedule The schedule storage reference
-     * @param scheduleId The ID of the schedule (for event emission)
      * @param periodIndex The index of the period within the schedule
      */
-    function _claim(
-        Schedule storage schedule,
-        uint256 scheduleId,
-        uint256 periodIndex
-    ) internal returns (uint256 claimableAmount) {
+    function _claim(Schedule storage schedule, uint256 periodIndex) internal returns (uint256 claimableAmount) {
         // Process the specific period
         VestingPeriod storage period = schedule.periods[periodIndex];
         claimableAmount = _getClaimableAmountForPeriod(period);
@@ -1008,7 +1003,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         if (claimableAmount > 0) {
             period.claimedAmount += claimableAmount;
             // Emit event
-            emit TokenRelease(_msgSender(), schedule.beneficiary, scheduleId, periodIndex, claimableAmount);
+            emit TokenRelease(_msgSender(), schedule.beneficiary, schedule.id, periodIndex, claimableAmount);
         }
     }
 
