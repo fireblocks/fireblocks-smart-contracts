@@ -891,6 +891,26 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         super.renounceRole(role, account);
     }
 
+    /**
+     * @notice Prevents default admins from revoking their own DEFAULT_ADMIN_ROLE
+     * @dev Ensures there's always at least one admin who can manage the contract.
+     *      This prevents the bypass of the renounceRole restriction through revokeRole.
+     *
+     * Calling Conditions:
+     *
+     * - The `role` parameter can't be `DEFAULT_ADMIN_ROLE`, when the account is the caller
+     * - For other role revocations, follows standard AccessControl rules
+     *
+     * @param role The role being revoked
+     * @param account The account from which the role is being revoked
+     */
+    function revokeRole(bytes32 role, address account) public virtual override {
+        if (role == DEFAULT_ADMIN_ROLE && account == _msgSender()) {
+            revert LibErrors.DefaultAdminError();
+        }
+        super.revokeRole(role, account);
+    }
+
     /// Internal Functions - Vesting Calculations
 
     /**
