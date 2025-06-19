@@ -77,6 +77,15 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      */
     bytes32 public constant SALVAGE_ROLE = keccak256("SALVAGE_ROLE");
 
+    /**
+     * @notice Maximum relative time threshold for global vesting mode. This means that when the global vesting mode
+     *         is enabled, schedule periods will be limited to starting within the next ≈ 31.7 years after
+     *         `globalVestingStartTime`.
+     * @dev Prevents accidental use of absolute Unix timestamps instead of relative offsets.
+     *      Value of 1e9 seconds ≈ 31.7 years is considered a sensible upper bound for relative times.
+     */
+    uint256 private constant MAX_RELATIVE_TIME_THRESHOLD = 1e9;
+
     /// State - Immutable
 
     /**
@@ -236,6 +245,11 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             // Validate cliff doesn't exceed vesting duration
             if (period.cliff > 0 && period.startPeriod + period.cliff > period.endPeriod) {
                 revert IVestingVaultErrors.InvalidCliff(i, period.cliff);
+            }
+
+            // In global mode, validate startPeriod isn't accidentally a Unix timestamp
+            if (globalVestingMode && period.startPeriod > MAX_RELATIVE_TIME_THRESHOLD) {
+                revert IVestingVaultErrors.InvalidStartTime(i, period.startPeriod);
             }
 
             // In non-global mode, validate start time is not in the past
