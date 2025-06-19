@@ -1111,17 +1111,19 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @notice Internal function to process token release to a beneficiary or admin
      * @dev Transfers tokens and emits events
      *
-     * This function performs an external call, and so it should only be called after all checks and effects
-     * have been performed.
+     * This function performs an external call and contrary to the Checks-Effects-Interactions (CEI) pattern, it has a
+     * side-effect following the transfer. Note that while it doesn't strictly follow the CEI pattern, it is safe to
+     * perform this interaction before the state update, because the `claimedAmount` checks and state-changing
+     * operation (which are a determinant for the transfer) are done before this call, in `_claim` or `cancelSchedule`.
      *
      * @param recipient The token recipient address
      * @param amount The amount to release
      */
     function _processTokenRelease(address recipient, uint256 amount) internal {
-        // Update committed tokens by decreasing the released amount
-        committedTokens -= amount;
-
-        // Transfer tokens
+        // Transfer tokens first (note: safe anti-pattern)
         vestingToken.safeTransfer(recipient, amount);
+
+        // Reduce the committed tokens constraint by the released amount
+        committedTokens -= amount;
     }
 }
