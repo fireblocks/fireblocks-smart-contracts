@@ -296,7 +296,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         committedTokens += totalAmount;
 
         // Emit event with the complete schedule
-        emit VestingScheduleCreated(msg.sender, beneficiary, scheduleId, newSchedule);
+        emit VestingScheduleCreated(_msgSender(), beneficiary, scheduleId, newSchedule);
     }
 
     /**
