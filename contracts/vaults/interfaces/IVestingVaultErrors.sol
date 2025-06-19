@@ -71,6 +71,13 @@ interface IVestingVaultErrors {
     error InvalidCliff(uint256 periodIndex, uint256 cliff);
 
     /**
+     * @dev Indicates that the vesting duration (endPeriod - startPeriod) is invalid.
+     * @param periodIndex The index of the vesting period that has an invalid duration.
+     * @param duration The invalid duration that was provided.
+     */
+    error InvalidDuration(uint256 periodIndex, uint256 duration);
+
+    /**
      * @dev Indicates that the schedule index is not valid.
      * @param beneficiary The address of the beneficiary.
      * @param scheduleIndex The invalid schedule index.
