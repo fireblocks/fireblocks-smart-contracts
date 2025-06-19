@@ -77,6 +77,24 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      */
     bytes32 public constant SALVAGE_ROLE = keccak256("SALVAGE_ROLE");
 
+    /**
+     * @notice Maximum relative time threshold for global vesting mode. This means that when the global vesting mode
+     *         is enabled, schedule periods will be limited to starting within the next ≈ 31.7 years after
+     *         `globalVestingStartTime`.
+     *
+     * @dev Prevents accidental use of absolute Unix timestamps instead of relative offsets.
+     *      Value of 1e9 seconds ≈ 31.7 years is considered a sensible upper bound for relative times.
+     */
+    uint256 private constant MAX_RELATIVE_TIME_THRESHOLD = 1e9;
+
+    /**
+     * @notice Maximum duration allowed for any vesting period (start to end time difference).
+     * @dev This constant limits the duration of individual vesting periods to prevent excessively long vesting
+     *      schedules as a result of incorrect input. Applied to both global and individual vesting modes.
+     *      Value of 1.6e9 seconds represents ≈ 50.7 years.
+     */
+    uint256 private constant MAX_DURATION = 1.6e9;
+
     /// State - Immutable
 
     /**
@@ -232,12 +250,20 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
 
             // Validate period times
             if (period.endPeriod <= period.startPeriod) revert IVestingVaultErrors.InvalidEndTime(i, period.endPeriod);
-
+            // Validate maximum duration for vesting period
+            uint256 vestingDuration = period.endPeriod - period.startPeriod;
+            require(vestingDuration <= MAX_DURATION, IVestingVaultErrors.InvalidDuration(i, vestingDuration));
             // Validate cliff doesn't exceed vesting duration
             if (period.cliff > 0 && period.startPeriod + period.cliff > period.endPeriod) {
                 revert IVestingVaultErrors.InvalidCliff(i, period.cliff);
             }
-
+            // In global mode, validate startPeriod isn't accidentally a Unix timestamp
+            if (globalVestingMode) {
+                require(
+                    period.startPeriod <= MAX_RELATIVE_TIME_THRESHOLD,
+                    IVestingVaultErrors.InvalidStartTime(i, period.startPeriod)
+                );
+            }
             // In non-global mode, validate start time is not in the past
             if (!globalVestingMode && period.startPeriod < block.timestamp) {
                 revert IVestingVaultErrors.InvalidStartTime(i, period.startPeriod);
