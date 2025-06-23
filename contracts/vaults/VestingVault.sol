@@ -22,6 +22,7 @@ import {Context} from "@openzeppelin/contracts-v5/utils/Context.sol";
 import {IVestingVault} from "./interfaces/IVestingVault.sol";
 import {IVestingVaultErrors} from "./interfaces/IVestingVaultErrors.sol";
 import {SalvageCapable} from "../library/Utils/SalvageCapable.sol";
+import {BoundedRoleMembership} from "../library/Utils/BoundedRoleMembership.sol";
 import {LibErrors} from "../library/Errors/LibErrors.sol";
 
 /**
@@ -40,21 +41,26 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
  *
  *      This contract is non-upgradeable for security and immutability as per design requirements.
  *
- *      Access control roles:
- *      - VESTING_ADMIN_ROLE: Can create schedules and start global vesting
- *      - FORFEITURE_ADMIN_ROLE: Can cancel vesting schedules
- *      - DEFAULT_ADMIN_ROLE: Can manage roles and perform salvage operations
+ *      Access control roles and member count limits:
+ *      - VESTING_ADMIN_ROLE: Can create schedules and start global vesting. Maximum 1 account.
+ *      - FORFEITURE_ADMIN_ROLE: Can cancel vesting schedules. No account limit.
+ *      - DEFAULT_ADMIN_ROLE: Can manage roles and perform salvage operations. No account limit.
+ *      - SALVAGE_ROLE: Can salvage tokens and gas from the contract. No account limit.
  *
  *      Limitations:
  *      - Rebasing tokens are NOT supported. This contract assumes token balances remain constant
  *        except through explicit transfers. Rebasing tokens automatically adjust all holder balances (up or down),
  *        which would break vesting accounting as the contract tracks fixed amounts at schedule creation. Using
  *        rebasing tokens will lead to potential loss of funds.
+ *      - Fee-on-transfer tokens are NOT supported. This contract assumes that when tokens are transferred,
+ *        the full amount is received. Fee-on-transfer tokens automatically deduct fees during transfers,
+ *        which would break vesting accounting as the contract would receive less tokens than expected.
+ *        Using fee-on-transfer tokens will lead to incorrect vesting calculations and potential loss of funds.
  *      - Maximum of (2^32 - 1) vesting schedules.
  *
  * @custom:security-contact support@fireblocks.com
  */
-contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, IVestingVaultErrors {
+contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestingVault, IVestingVaultErrors {
     using SafeERC20 for IERC20;
 
     /// Constants
@@ -942,6 +948,24 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             revert LibErrors.DefaultAdminError();
         }
         super.revokeRole(role, account);
+    }
+
+    /**
+     * @notice Returns the maximum number of members allowed for each role
+     * @dev Implements BoundedRoleMembership's abstract function to enforce role member limits.
+     *
+     * Role limits:
+     * - VESTING_ADMIN_ROLE: 1 member (to prevent token deposit and schedule creation coordination issues)
+     * - Other roles: 0 (unlimited by default)
+     *
+     * @param role The role to check the limit for
+     * @return The maximum number of members allowed (0 for unlimited)
+     */
+    function _maxRoleMembers(bytes32 role) internal pure override returns (uint256) {
+        if (role == VESTING_ADMIN_ROLE) {
+            return 1;
+        }
+        return 0;
     }
 
     /// Internal Functions - Vesting Calculations
