@@ -226,12 +226,9 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 			uint256 _peerCount = _peerEids.length;
 			peerList = new PeerInfo[](_peerCount);
 
-			for (uint256 i; i < _peerCount; ) {
+			for (uint256 i; i < _peerCount; ++i) {
 				uint32 eid = _peerEids[i];
 				peerList[i] = PeerInfo({endpointId: eid, peer: peers[eid]});
-				unchecked {
-					++i;
-				}
 			}
 		}
 	}
@@ -466,15 +463,12 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 		} else if (hadPeerBefore && isSettingToZero) {
 			// Removing peer - remove from array
 			uint256 peerCount = _peerEids.length;
-			for (uint256 i; i < peerCount; ) {
+			for (uint256 i; i < peerCount; ++i) {
 				if (_peerEids[i] == _eid) {
 					// Replace with the last element and pop
 					_peerEids[i] = _peerEids[peerCount - 1];
 					_peerEids.pop();
 					break;
-				}
-				unchecked {
-					++i;
 				}
 			}
 		}
