@@ -136,6 +136,13 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 	 */
 	EnumerableMap.AddressToUintMap internal _embargoLedger;
 
+	/**
+	 * @notice The total amount of tokens currently embargoed in this contract.
+	 * @dev This variable keeps track of the total amount of tokens that are currently locked in the embargo ledger.
+	 * It is updated whenever tokens are added or removed from the ledger.
+	 */
+	uint256 private totalEmbargoedBalance;
+
 	/// Events
 
 	/**
@@ -430,6 +437,7 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 		// Record in embargo ledger if failed
 		(, uint256 currentEmbargo) = _embargoLedger.tryGet(_to);
 		_embargoLedger.set(_to, currentEmbargo + _amountLD);
+		totalEmbargoedBalance += _amountLD;
 		emit EmbargoLock(_to, returnData, _amountLD);
 		return _amountLD;
 	}
@@ -486,6 +494,7 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 	function _recoverEmbargoedTokens(address _embargoedAccount, address _to) internal virtual {
 		(bool embargoExists, uint256 embargoAmount) = _embargoLedger.tryGet(_embargoedAccount);
 		bool embargoPurged = _embargoLedger.remove(_embargoedAccount);
+		totalEmbargoedBalance -= embargoAmount;
 		if (!embargoExists && !embargoPurged) revert LibErrors.NoBalance();
 
 		innerToken.safeTransfer(_to, embargoAmount);
@@ -579,15 +588,6 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 	function _authorizeSalvageERC20(address salvagedToken, uint256 amount) internal virtual override {
 		_authorizeSalvage();
 		if (salvagedToken == address(innerToken)) {
-			uint256 totalEmbargoedBalance = 0;
-			address[] memory accounts = _embargoLedger.keys();
-			for (uint256 i = 0; i < accounts.length; ) {
-				(, uint256 _amount) = _embargoLedger.tryGet(accounts[i]);
-				totalEmbargoedBalance += _amount;
-				unchecked {
-					++i;
-				}
-			}
 			if (
 				innerToken.balanceOf(address(this)) <= totalEmbargoedBalance ||
 				amount > innerToken.balanceOf(address(this)) - totalEmbargoedBalance
