@@ -526,13 +526,9 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 	 * or revokeRole ) to be executed.
 	 *
 	 * @dev Reverts when the {ERC20F} contract is paused.
-	 *
-	 * Calling Conditions:
-	 *
-	 * - {ERC20F} is not paused.
 	 */
 	/* solhint-disable no-empty-blocks */
-	function _authorizeRoleManagement() internal virtual override whenNotPaused {}
+	function _authorizeRoleManagement() internal virtual override {}
 
 	/**
 	 * @notice This is a function that applies any validations required to allow Pause operations (like pause
