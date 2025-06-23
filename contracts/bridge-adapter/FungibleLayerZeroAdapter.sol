@@ -428,7 +428,8 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 			}
 		}
 		// Record in embargo ledger if failed
-		_embargoLedger.set(_to, _amountLD);
+		(, uint256 currentEmbargo) = _embargoLedger.tryGet(_to);
+		_embargoLedger.set(_to, currentEmbargo + _amountLD);
 		emit EmbargoLock(_to, returnData, _amountLD);
 		return _amountLD;
 	}
