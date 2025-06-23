@@ -25,6 +25,8 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
  * OpenZeppelin's Pausable contract to implement the pause and unpause functionality. The inheriting contract must
  * implement the `_authorizePause` function to provide role-based access control for pausing and unpausing the
  * contract.
+ *
+ * @custom:security-contact support@fireblocks.com
  */
 abstract contract PauseCapable is Pausable {
 	/// Functions

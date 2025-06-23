@@ -26,6 +26,8 @@ import {LibErrors} from "../../library/Errors/LibErrors.sol";
  * @title SalvageCapable
  * @author Fireblocks
  * @notice This abstract contract provides internal contract logic for rescuing tokens and ETH.
+ *
+ * @custom:security-contact support@fireblocks.com
  */
 abstract contract SalvageCapable is Context {
 	using SafeERC20 for IERC20;
