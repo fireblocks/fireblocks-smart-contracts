@@ -278,6 +278,7 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 	 * this function has an unbounded cost, and using it as part of a state-changing function may render the function
 	 * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
 	 * This comment is from openzeppelin-contracts/utils/structs/EnumerableMap.sol
+	 * @return An array of addresses that have an embargoed balance in the `_embargoLedger`.
 	 */
 	function embargoedAccounts() external view returns (address[] memory) {
 		return _embargoLedger.keys();
