@@ -22,6 +22,14 @@ const config: HardhatUserConfig = {
 					},
 				},
 			},
+			
+			{
+				version: "0.8.29",
+				settings: {
+					evmVersion: "paris",
+					viaIR: true,
+				},
+			},
 		]
 
 	},
