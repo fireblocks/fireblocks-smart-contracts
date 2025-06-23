@@ -418,7 +418,7 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 		uint32 /*_srcEid*/
 	) internal virtual override returns (uint256 amountReceivedLD) {
 		innerToken.mint(address(this), _amountLD);
-		bytes memory data = abi.encodeWithSelector(innerToken.transfer.selector, _to, _amountLD);
+		bytes memory data = abi.encodeCall(innerToken.transfer, (_to, _amountLD));
 		(bool success, bytes memory returnData) = address(innerToken).call(data);
 
 		// Check for success and expected return value (true or empty)
