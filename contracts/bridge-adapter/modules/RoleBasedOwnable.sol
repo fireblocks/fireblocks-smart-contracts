@@ -30,6 +30,8 @@ import {LibErrors} from "../../library/Errors/LibErrors.sol";
  * The Contracts that inherit from this contract:
  *  - The derived contract must implement the `_checkOwner` function to check if the sender has the required role.
  *  - The derived contract can choose which role to use.
+ *
+ * @custom:security-contact support@fireblocks.com
  */
 abstract contract RoleBasedOwnable is AccessControl, Ownable {
 	/// Functions

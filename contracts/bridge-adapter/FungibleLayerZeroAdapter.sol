@@ -55,6 +55,8 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
  * - Destination chain must have a corresponding adapter deployed and properly configured
  * - The peer for the destination chain must exist
  * - Assumes lossless 1:1 transfers (no fees on token transfer)
+ *
+ * @custom:security-contact support@fireblocks.com
  */
 contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, SalvageCapable {
 	using SafeERC20 for IERC20MintableBurnable;

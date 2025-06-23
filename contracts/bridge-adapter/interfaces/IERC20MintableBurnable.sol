@@ -21,6 +21,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @title IERC20MintableBurnable
  * @author Fireblocks
  * @notice Interface for ERC20 tokens with mint and burn capabilities.
+ *
+ * @custom:security-contact support@fireblocks.com
  */
 interface IERC20MintableBurnable is IERC20 {
 	/**
