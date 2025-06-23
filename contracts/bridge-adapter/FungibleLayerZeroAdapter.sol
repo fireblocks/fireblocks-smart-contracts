@@ -217,12 +217,9 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 			uint256 _peerCount = _peerEids.length;
 			peerList = new PeerInfo[](_peerCount);
 
-			for (uint256 i = 0; i < _peerCount; ) {
+			for (uint256 i = 0; i < _peerCount; ++i) {
 				uint32 eid = _peerEids[i];
 				peerList[i] = PeerInfo({endpointId: eid, peer: peers[eid]});
-				unchecked {
-					++i;
-				}
 			}
 		}
 	}
@@ -453,15 +450,12 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 			_peerEids.push(_eid);
 		} else if (hadPeerBefore && isSettingToZero) {
 			// Removing peer - remove from array
-			for (uint256 i = 0; i < _peerEids.length; ) {
+			for (uint256 i = 0; i < _peerEids.length; ++i) {
 				if (_peerEids[i] == _eid) {
 					// Replace with the last element and pop
 					_peerEids[i] = _peerEids[_peerEids.length - 1];
 					_peerEids.pop();
 					break;
-				}
-				unchecked {
-					++i;
 				}
 			}
 		}
@@ -580,12 +574,9 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 		if (salvagedToken == address(innerToken)) {
 			uint256 totalEmbargoedBalance = 0;
 			address[] memory accounts = _embargoLedger.keys();
-			for (uint256 i = 0; i < accounts.length; ) {
+			for (uint256 i = 0; i < accounts.length; ++i) {
 				(, uint256 _amount) = _embargoLedger.tryGet(accounts[i]);
 				totalEmbargoedBalance += _amount;
-				unchecked {
-					++i;
-				}
 			}
 			if (
 				innerToken.balanceOf(address(this)) <= totalEmbargoedBalance ||
