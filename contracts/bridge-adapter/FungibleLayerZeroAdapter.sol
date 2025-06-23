@@ -217,7 +217,7 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 			uint256 _peerCount = _peerEids.length;
 			peerList = new PeerInfo[](_peerCount);
 
-			for (uint256 i = 0; i < _peerCount; ) {
+			for (uint256 i; i < _peerCount; ) {
 				uint32 eid = _peerEids[i];
 				peerList[i] = PeerInfo({endpointId: eid, peer: peers[eid]});
 				unchecked {
@@ -453,7 +453,7 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 			_peerEids.push(_eid);
 		} else if (hadPeerBefore && isSettingToZero) {
 			// Removing peer - remove from array
-			for (uint256 i = 0; i < _peerEids.length; ) {
+			for (uint256 i; i < _peerEids.length; ) {
 				if (_peerEids[i] == _eid) {
 					// Replace with the last element and pop
 					_peerEids[i] = _peerEids[_peerEids.length - 1];
@@ -578,9 +578,9 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 	function _authorizeSalvageERC20(address salvagedToken, uint256 amount) internal virtual override {
 		_authorizeSalvage();
 		if (salvagedToken == address(innerToken)) {
-			uint256 totalEmbargoedBalance = 0;
+			uint256 totalEmbargoedBalance;
 			address[] memory accounts = _embargoLedger.keys();
-			for (uint256 i = 0; i < accounts.length; ) {
+			for (uint256 i; i < accounts.length; ) {
 				(, uint256 _amount) = _embargoLedger.tryGet(accounts[i]);
 				totalEmbargoedBalance += _amount;
 				unchecked {
