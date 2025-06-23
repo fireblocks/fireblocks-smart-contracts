@@ -463,10 +463,11 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 			_peerEids.push(_eid);
 		} else if (hadPeerBefore && isSettingToZero) {
 			// Removing peer - remove from array
-			for (uint256 i; i < _peerEids.length; ) {
+			uint256 peerCount = _peerEids.length;
+			for (uint256 i; i < peerCount; ) {
 				if (_peerEids[i] == _eid) {
 					// Replace with the last element and pop
-					_peerEids[i] = _peerEids[_peerEids.length - 1];
+					_peerEids[i] = _peerEids[peerCount - 1];
 					_peerEids.pop();
 					break;
 				}
