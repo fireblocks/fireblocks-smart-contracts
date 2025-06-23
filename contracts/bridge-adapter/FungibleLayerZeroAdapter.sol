@@ -331,7 +331,7 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 		whenNotPaused
 		returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
 	{
-		return _send(_sendParam, _fee, _refundAddress);
+		_send(_sendParam, _fee, _refundAddress);
 	}
 
 	/**
@@ -430,7 +430,6 @@ contract FungibleLayerZeroAdapter is OFTCore, RoleBasedOwnable, PauseCapable, Sa
 		// Record in embargo ledger if failed
 		_embargoLedger.set(_to, _amountLD);
 		emit EmbargoLock(_to, returnData, _amountLD);
-		return _amountLD;
 	}
 
 	/**
