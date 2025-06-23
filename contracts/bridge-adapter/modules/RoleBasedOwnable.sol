@@ -74,6 +74,11 @@ abstract contract RoleBasedOwnable is AccessControl, Ownable {
 	 *
 	 * - Cannot renounce DEFAULT_ADMIN_ROLE.
 	 * - 'account' is the caller of the transaction.
+
+	 * This function emits a {RoleRevoked} event as part of {AccessControl}.{renounceRole}.
+	 *
+	 * @param role The role that will be renounced.
+	 * @param account The address from which role is renounced
 	 */
 	function renounceRole(bytes32 role, address account) public virtual override {
 		if (role == DEFAULT_ADMIN_ROLE) {
