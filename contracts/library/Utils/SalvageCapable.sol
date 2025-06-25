@@ -113,8 +113,8 @@ abstract contract SalvageCapable is Context {
      */
     function salvageNFT(IERC721 token, uint256 tokenId) external virtual {
         _authorizeSalvageNFT();
-        token.safeTransferFrom(address(this), _msgSender(), tokenId);
         emit NFTSalvaged(_msgSender(), address(token), tokenId);
+        token.safeTransferFrom(address(this), _msgSender(), tokenId);
     }
 
     /**
