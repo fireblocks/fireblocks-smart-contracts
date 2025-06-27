@@ -1013,9 +1013,9 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @dev Implements linear vesting with optional cliff period
      *
      * @param period The vesting period to calculate for
-     * @return vestedAmount The amount vested up to the current time
+     * @return The amount vested up to the current time
      */
-    function _getVestedAmountForPeriod(VestingPeriod memory period) internal view returns (uint256 vestedAmount) {
+    function _getVestedAmountForPeriod(VestingPeriod memory period) internal view returns (uint256) {
         uint256 currentTime = block.timestamp;
         uint256 vestingStartTime;
         uint256 vestingEndTime;
@@ -1057,7 +1057,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         // Therefore, vestingDuration > 0
 
         // Calculate vested amount using proportion of time elapsed (linear vesting)
-        vestedAmount = (period.amount * elapsedTime) / vestingDuration;
+        return (period.amount * elapsedTime) / vestingDuration;
     }
 
     /**
