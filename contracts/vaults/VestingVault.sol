@@ -415,6 +415,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      *
      * Reverts if:
      * - There are no tokens available to be claimed for the specified schedule
+     * - The schedule is cancelled
      *
      * Emits {TokenRelease} events for each period with claimable tokens as part of {_claim}.
      *
@@ -432,6 +433,8 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
         // Validate schedule belongs to caller
         require(_msgSender() == scheduleBeneficiary, LibErrors.UnauthorizedCaller());
+        // Validate schedule is not cancelled
+        require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
 
         uint256 totalClaimable = 0;
         uint256 numPeriods = schedule.periods.length;
@@ -465,6 +468,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      *
      * Reverts if:
      * - There are no tokens available to be claimed for the specified period
+     * - The schedule is cancelled
      *
      * Emits a {TokenRelease} event as part of {_claim}.
      *
@@ -483,6 +487,8 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
         // Validate schedule belongs to caller
         require(_msgSender() == scheduleBeneficiary, LibErrors.UnauthorizedCaller());
+        // Validate schedule is not cancelled
+        require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
         // Check if periodIndex is within bounds
         require(
             periodIndex < schedule.periods.length,
@@ -581,6 +587,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      *
      * Reverts if:
      * - There are no tokens available to be released for the specified schedule
+     * - The schedule is cancelled
      *
      * Emits {TokenRelease} events for each period with releasable tokens as part of {_claim}.
      *
@@ -596,6 +603,8 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
+        // Validate schedule is not cancelled
+        require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
 
         uint256 totalReleasable = 0;
         uint256 numPeriods = schedule.periods.length;
@@ -631,6 +640,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      *
      * Reverts if:
      * - There are no tokens available to be released for the specified period
+     * - The schedule is cancelled
      *
      * Emits a {TokenRelease} event as part of {_claim}.
      *
@@ -647,6 +657,8 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
+        // Validate schedule is not cancelled
+        require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
         // Check if periodIndex is within bounds
         require(
             periodIndex < schedule.periods.length,
