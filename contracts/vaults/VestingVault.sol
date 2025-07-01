@@ -695,7 +695,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             VestingPeriod storage period = schedule.periods[i];
 
             // Skip fully claimed periods
-            if (period.claimedAmount == period.amount) {
+            if (period.claimedAmount >= period.amount) {
                 unchecked {
                     ++i;
                 }
@@ -1070,7 +1070,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      */
     function _getClaimableAmountForPeriod(VestingPeriod memory period) internal view returns (uint256 claimableAmount) {
         // Skip if already fully claimed
-        if (period.claimedAmount == period.amount) {
+        if (period.claimedAmount >= period.amount) {
             return 0;
         }
         uint256 vestedAmount = _getVestedAmountForPeriod(period);
