@@ -837,13 +837,17 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
     /**
      * @notice Returns the claimable amount for a specific schedule
      * @dev Calculates the sum of vested but unclaimed tokens across all periods
-     *      in the schedule. Returns zero for cancelled schedules.
+     *      in the schedule.
+     *
+     * Returns zero when:
+     * - schedule does not exist (e.g. `scheduleId` is 0),
+     * - schedule is cancelled,
+     * - global vesting mode is enabled but not started
      *
      * @param scheduleId The ID of the schedule
      * @return claimableAmount Amount that can be claimed from the schedule
      */
     function getClaimableAmount(uint256 scheduleId) external view override returns (uint256 claimableAmount) {
-        // If global vesting mode is enabled but not started, return 0
         if (globalVestingMode && !globalVestingStarted) {
             return 0;
         }
@@ -859,7 +863,12 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
     /**
      * @notice Returns the claimable amount for a specific period
      * @dev Calculates the vested but unclaimed tokens for a single period.
-     *      Returns zero for cancelled schedules or invalid period indices.
+     *
+     * Returns zero when:
+     * - schedule does not exist (e.g. `scheduleId` is 0),
+     * - schedule is cancelled,
+     * - global vesting mode is enabled but not started,
+     * - `periodIndex` is out of bounds
      *
      * @param scheduleId The ID of the schedule
      * @param periodIndex The index of the period
@@ -869,7 +878,6 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         uint256 scheduleId,
         uint256 periodIndex
     ) external view override returns (uint256 claimableAmount) {
-        // If global vesting mode is enabled but not started, return 0
         if (globalVestingMode && !globalVestingStarted) {
             return 0;
         }
