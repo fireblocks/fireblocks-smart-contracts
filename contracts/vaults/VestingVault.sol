@@ -116,13 +116,13 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @notice Mapping from schedule ID to schedule data
      * @dev Primary storage for all schedules
      */
-    mapping(uint256 => Schedule) public scheduleById;
+    mapping(uint256 => Schedule) internal _scheduleById;
 
     /**
      * @notice Mapping from beneficiary address to their schedule IDs
      * @dev Enables querying all schedules for a beneficiary
      */
-    mapping(address => uint32[]) public beneficiaryToScheduleIds;
+    mapping(address => uint32[]) internal _beneficiaryToScheduleIds;
 
     /**
      * @notice Current amount of tokens committed to vesting schedules
@@ -215,7 +215,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
 
         // Generate new schedule ID and initialize storage
         scheduleId = ++scheduleCounter;
-        Schedule storage newSchedule = scheduleById[scheduleId];
+        Schedule storage newSchedule = _scheduleById[scheduleId];
         newSchedule.id = scheduleId;
         newSchedule.beneficiary = beneficiary;
         newSchedule.isCancellable = isCancellable;
@@ -266,7 +266,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         );
 
         // Add schedule ID to beneficiary's list and update committed tokens
-        beneficiaryToScheduleIds[beneficiary].push(scheduleId);
+        _beneficiaryToScheduleIds[beneficiary].push(scheduleId);
         committedTokens += totalAmount;
 
         // Emit event with the complete schedule
@@ -322,7 +322,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         _validateGlobalVestingStatus();
 
         address beneficiary = _msgSender();
-        uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
+        uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
         uint256 scheduleCount = scheduleIds.length;
 
         require(scheduleCount > 0, IVestingVaultErrors.NoTokensToClaim());
@@ -332,7 +332,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         // Process each schedule
         for (uint256 i = 0; i < scheduleCount; ) {
             uint32 scheduleId = scheduleIds[i];
-            Schedule storage schedule = scheduleById[scheduleId];
+            Schedule storage schedule = _scheduleById[scheduleId];
             // Skip cancelled schedules
             if (schedule.isCancelled) {
                 unchecked {
@@ -380,7 +380,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     function claim(uint256 scheduleId) external override {
         _validateGlobalVestingStatus();
 
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -426,7 +426,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     function claim(uint256 scheduleId, uint256 periodIndex) external override {
         _validateGlobalVestingStatus();
 
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -469,7 +469,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     function release(address beneficiary) external override onlyRole(VESTING_ADMIN_ROLE) {
         _validateGlobalVestingStatus();
 
-        uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
+        uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
         uint256 scheduleCount = scheduleIds.length;
 
         require(scheduleCount > 0, IVestingVaultErrors.NoTokensToClaim());
@@ -479,7 +479,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         // Process each schedule
         for (uint256 i = 0; i < scheduleCount; ) {
             uint32 scheduleId = scheduleIds[i];
-            Schedule storage schedule = scheduleById[scheduleId];
+            Schedule storage schedule = _scheduleById[scheduleId];
 
             // Skip cancelled schedules
             if (schedule.isCancelled) {
@@ -529,7 +529,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     function release(uint256 scheduleId) external override onlyRole(VESTING_ADMIN_ROLE) {
         _validateGlobalVestingStatus();
 
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -574,7 +574,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     function release(uint256 scheduleId, uint256 periodIndex) external override onlyRole(VESTING_ADMIN_ROLE) {
         _validateGlobalVestingStatus();
 
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -611,7 +611,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param scheduleId The ID of the schedule to cancel
      */
     function cancelSchedule(uint256 scheduleId) external override onlyRole(FORFEITURE_ADMIN_ROLE) {
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
 
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -683,11 +683,11 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @return schedules Array of schedules for the beneficiary
      */
     function getSchedules(address beneficiary) external view override returns (Schedule[] memory schedules) {
-        uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
+        uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
         schedules = new Schedule[](scheduleIds.length);
 
         for (uint256 i = 0; i < scheduleIds.length; ) {
-            schedules[i] = scheduleById[scheduleIds[i]];
+            schedules[i] = _scheduleById[scheduleIds[i]];
             unchecked {
                 ++i;
             }
@@ -708,7 +708,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @return schedule The schedule with the specified ID
      */
     function getSchedule(uint32 scheduleId) external view override returns (Schedule memory schedule) {
-        schedule = scheduleById[scheduleId];
+        schedule = _scheduleById[scheduleId];
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
         return schedule;
     }
@@ -722,7 +722,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @return scheduleIds Array of schedule IDs for the beneficiary
      */
     function getScheduleIds(address beneficiary) external view override returns (uint32[] memory scheduleIds) {
-        return beneficiaryToScheduleIds[beneficiary];
+        return _beneficiaryToScheduleIds[beneficiary];
     }
 
     /**
@@ -734,7 +734,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @return claimableAmount Total amount that can be claimed
      */
     function getClaimableAmount(address beneficiary) external view override returns (uint256 claimableAmount) {
-        uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
+        uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
 
         // If global vesting mode is enabled but not started, return 0
         if (globalVestingMode && !globalVestingStarted) {
@@ -743,7 +743,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
 
         // Sum claimable amounts across all schedules
         for (uint256 i = 0; i < scheduleIds.length; ) {
-            Schedule memory schedule = scheduleById[scheduleIds[i]];
+            Schedule memory schedule = _scheduleById[scheduleIds[i]];
             claimableAmount += _getClaimableAmountForSchedule(schedule);
             unchecked {
                 ++i;
@@ -765,7 +765,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             return 0;
         }
 
-        Schedule memory schedule = scheduleById[scheduleId];
+        Schedule memory schedule = _scheduleById[scheduleId];
         if (schedule.id == 0) {
             return 0;
         }
@@ -791,7 +791,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             return 0;
         }
 
-        Schedule memory schedule = scheduleById[scheduleId];
+        Schedule memory schedule = _scheduleById[scheduleId];
         if (schedule.id == 0 || schedule.isCancelled || periodIndex >= schedule.periods.length) {
             return 0;
         }
