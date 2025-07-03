@@ -140,13 +140,13 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @notice Mapping from schedule ID to schedule data
      * @dev Primary storage for all schedules
      */
-    mapping(uint256 => Schedule) internal _scheduleById;
+    mapping(uint256 scheduleId => Schedule schedule) internal _scheduleById;
 
     /**
      * @notice Mapping from beneficiary address to their schedule IDs
      * @dev Enables querying all schedules for a beneficiary
      */
-    mapping(address => uint32[]) internal _beneficiaryToScheduleIds;
+    mapping(address beneficiary => uint32[] scheduleIds) internal _beneficiaryToScheduleIds;
 
     /**
      * @notice Current amount of tokens committed to vesting schedules
