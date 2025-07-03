@@ -210,8 +210,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         VestingPeriod[] calldata periods
     ) external override onlyRole(VESTING_ADMIN_ROLE) returns (uint32 scheduleId) {
         // Validate inputs
-        if (beneficiary == address(0)) revert LibErrors.InvalidAddress();
-        if (periods.length == 0) revert LibErrors.InvalidArrayLength();
+        require(beneficiary != address(0), LibErrors.InvalidAddress());
+        require(periods.length > 0, LibErrors.InvalidArrayLength());
 
         // Generate new schedule ID and initialize storage
         scheduleId = ++scheduleCounter;
@@ -228,19 +228,25 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             VestingPeriod calldata period = periods[i];
 
             // Validate period amount
-            if (period.amount == 0) revert LibErrors.ZeroAmount();
+            require(period.amount > 0, LibErrors.ZeroAmount());
 
             // Validate period times
-            if (period.endPeriod <= period.startPeriod) revert IVestingVaultErrors.InvalidEndTime(i, period.endPeriod);
+            require(period.endPeriod > period.startPeriod, IVestingVaultErrors.InvalidEndTime(i, period.endPeriod));
 
             // Validate cliff doesn't exceed vesting duration
-            if (period.cliff > 0 && period.startPeriod + period.cliff > period.endPeriod) {
-                revert IVestingVaultErrors.InvalidCliff(i, period.cliff);
+            if (period.cliff > 0) {
+                require(
+                    period.startPeriod + period.cliff <= period.endPeriod,
+                    IVestingVaultErrors.InvalidCliff(i, period.cliff)
+                );
             }
 
             // In non-global mode, validate start time is not in the past
-            if (!globalVestingMode && period.startPeriod < block.timestamp) {
-                revert IVestingVaultErrors.InvalidStartTime(i, period.startPeriod);
+            if (!globalVestingMode) {
+                require(
+                    period.startPeriod >= block.timestamp,
+                    IVestingVaultErrors.InvalidStartTime(i, period.startPeriod)
+                );
             }
 
             // Store period and accumulate total amount
@@ -254,9 +260,10 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         // Check contract has sufficient uncommitted balance
         uint256 contractBalance = vestingToken.balanceOf(address(this));
         uint256 availableBalance = contractBalance - committedTokens;
-
-        if (availableBalance < totalAmount)
-            revert IVestingVaultErrors.InsufficientBalance(contractBalance, availableBalance);
+        require(
+            availableBalance >= totalAmount,
+            IVestingVaultErrors.InsufficientBalance(contractBalance, availableBalance)
+        );
 
         // Add schedule ID to beneficiary's list and update committed tokens
         beneficiaryToScheduleIds[beneficiary].push(scheduleId);
@@ -318,9 +325,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
         uint256 scheduleCount = scheduleIds.length;
 
-        if (scheduleCount == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(scheduleCount > 0, IVestingVaultErrors.NoTokensToClaim());
 
         uint256 totalClaimable = 0;
 
@@ -349,9 +354,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             }
         }
 
-        if (totalClaimable == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(totalClaimable > 0, IVestingVaultErrors.NoTokensToClaim());
         // Transfer all claimable tokens
         _processTokenRelease(beneficiary, totalClaimable);
     }
@@ -395,9 +398,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             }
         }
 
-        if (totalClaimable == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(totalClaimable > 0, IVestingVaultErrors.NoTokensToClaim());
         // Transfer all claimable tokens
         _processTokenRelease(scheduleBeneficiary, totalClaimable);
     }
@@ -438,9 +439,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         );
         // Process the specific period
         uint256 claimableAmount = _claim(schedule, periodIndex);
-        if (claimableAmount == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(claimableAmount > 0, IVestingVaultErrors.NoTokensToClaim());
         // Transfer tokens
         _processTokenRelease(scheduleBeneficiary, claimableAmount);
     }
@@ -473,9 +472,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
         uint256 scheduleCount = scheduleIds.length;
 
-        if (scheduleCount == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(scheduleCount > 0, IVestingVaultErrors.NoTokensToClaim());
 
         uint256 totalReleasable = 0;
 
@@ -505,9 +502,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             }
         }
 
-        if (totalReleasable == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(totalReleasable > 0, IVestingVaultErrors.NoTokensToClaim());
 
         // Transfer all releasable tokens
         _processTokenRelease(beneficiary, totalReleasable);
@@ -551,10 +546,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             }
         }
 
-        if (totalReleasable == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
-
+        require(totalReleasable > 0, IVestingVaultErrors.NoTokensToClaim());
         // Transfer all releasable tokens
         _processTokenRelease(scheduleBeneficiary, totalReleasable);
     }
@@ -594,9 +586,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         // Process the specific period
         uint256 releasableAmount = _claim(schedule, periodIndex);
 
-        if (releasableAmount == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(releasableAmount > 0, IVestingVaultErrors.NoTokensToClaim());
 
         // Transfer tokens
         _processTokenRelease(scheduleBeneficiary, releasableAmount);
@@ -719,7 +709,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      */
     function getSchedule(uint32 scheduleId) external view override returns (Schedule memory schedule) {
         schedule = scheduleById[scheduleId];
-        if (schedule.id == 0) revert LibErrors.NotFound(scheduleId);
+        require(schedule.id != 0, LibErrors.NotFound(scheduleId));
         return schedule;
     }
 
@@ -867,9 +857,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param account The account renouncing the role
      */
     function renounceRole(bytes32 role, address account) public virtual override {
-        if (role == DEFAULT_ADMIN_ROLE) {
-            revert LibErrors.DefaultAdminError();
-        }
+        require(role != DEFAULT_ADMIN_ROLE, LibErrors.DefaultAdminError());
         super.renounceRole(role, account);
     }
 
@@ -887,8 +875,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param account The account from which the role is being revoked
      */
     function revokeRole(bytes32 role, address account) public virtual override {
-        if (role == DEFAULT_ADMIN_ROLE && account == _msgSender()) {
-            revert LibErrors.DefaultAdminError();
+        if (account == _msgSender()) {
+            require(role != DEFAULT_ADMIN_ROLE, LibErrors.DefaultAdminError());
         }
         super.revokeRole(role, account);
     }
@@ -1049,8 +1037,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @notice Reverts if global vesting mode is enabled but not yet started
      */
     function _validateGlobalVestingStatus() internal view {
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
+        if (globalVestingMode) {
+            require(globalVestingStarted, IVestingVaultErrors.GlobalVestingNotStarted());
         }
     }
 }
