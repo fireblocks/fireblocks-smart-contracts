@@ -251,7 +251,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         // Validate periods and copy to storage in single loop
         uint256 totalAmount = 0;
         uint256 periodsLength = periods.length;
-        for (uint256 i = 0; i < periodsLength; ) {
+        for (uint256 i = 0; i < periodsLength; ++i) {
             VestingPeriodParam calldata period = periods[i];
 
             // Validate period amount
@@ -295,9 +295,6 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             // Store period and accumulate total amount
             newSchedule.periods.push(newPeriod);
             totalAmount += period.amount;
-            unchecked {
-                ++i;
-            }
         }
 
         // Check contract has sufficient uncommitted balance
@@ -373,27 +370,18 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         uint256 totalClaimable = 0;
 
         // Process each schedule
-        for (uint256 i = 0; i < scheduleCount; ) {
+        for (uint256 i = 0; i < scheduleCount; ++i) {
             uint32 scheduleId = scheduleIds[i];
             Schedule storage schedule = _scheduleById[scheduleId];
             // Skip cancelled schedules
             if (schedule.isCancelled) {
-                unchecked {
-                    ++i;
-                }
                 continue;
             }
             // Process each period in the schedule
             uint256 numPeriods = schedule.periods.length;
-            for (uint256 j = 0; j < numPeriods; ) {
+            for (uint256 j = 0; j < numPeriods; ++j) {
                 uint256 claimableAmount = _claim(schedule, j);
                 totalClaimable += claimableAmount;
-                unchecked {
-                    ++j;
-                }
-            }
-            unchecked {
-                ++i;
             }
         }
 
@@ -436,12 +424,9 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         uint256 totalClaimable = 0;
         uint256 numPeriods = schedule.periods.length;
         // Process each period in the schedule
-        for (uint256 i = 0; i < numPeriods; ) {
+        for (uint256 i = 0; i < numPeriods; ++i) {
             uint256 claimableAmount = _claim(schedule, i);
             totalClaimable += claimableAmount;
-            unchecked {
-                ++i;
-            }
         }
 
         require(totalClaimable > 0, IVestingVaultErrors.NoTokensToClaim());
@@ -526,28 +511,19 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         uint256 totalReleasable = 0;
 
         // Process each schedule
-        for (uint256 i = 0; i < scheduleCount; ) {
+        for (uint256 i = 0; i < scheduleCount; ++i) {
             uint32 scheduleId = scheduleIds[i];
             Schedule storage schedule = _scheduleById[scheduleId];
 
             // Skip cancelled schedules
             if (schedule.isCancelled) {
-                unchecked {
-                    ++i;
-                }
                 continue;
             }
             // Process each period in the schedule
             uint256 numPeriods = schedule.periods.length;
-            for (uint256 j = 0; j < numPeriods; ) {
+            for (uint256 j = 0; j < numPeriods; ++j) {
                 uint256 releasableAmount = _claim(schedule, j);
                 totalReleasable += releasableAmount;
-                unchecked {
-                    ++j;
-                }
-            }
-            unchecked {
-                ++i;
             }
         }
 
@@ -590,12 +566,9 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         uint256 numPeriods = schedule.periods.length;
 
         // Process each period in the schedule
-        for (uint256 i = 0; i < numPeriods; ) {
+        for (uint256 i = 0; i < numPeriods; ++i) {
             uint256 releasableAmount = _claim(schedule, i);
             totalReleasable += releasableAmount;
-            unchecked {
-                ++i;
-            }
         }
 
         require(totalReleasable > 0, IVestingVaultErrors.NoTokensToClaim());
@@ -682,14 +655,11 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
 
         // Calculate vested and total amounts across all periods
         uint256 periodsLength = schedule.periods.length;
-        for (uint256 i = 0; i < periodsLength; ) {
+        for (uint256 i = 0; i < periodsLength; ++i) {
             VestingPeriod storage period = schedule.periods[i];
 
             // Skip fully claimed periods
             if (period.claimedAmount >= period.amount) {
-                unchecked {
-                    ++i;
-                }
                 continue;
             }
             // Claim any vested amount
@@ -702,10 +672,6 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
 
             // Mark the full period as claimed to prevent future claims
             period.claimedAmount = period.amount;
-
-            unchecked {
-                ++i;
-            }
         }
         // Mark schedule as cancelled
         schedule.isCancelled = true;
@@ -741,11 +707,8 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
         schedules = new Schedule[](scheduleIds.length);
 
-        for (uint256 i = 0; i < scheduleIds.length; ) {
+        for (uint256 i = 0; i < scheduleIds.length; ++i) {
             schedules[i] = _scheduleById[scheduleIds[i]];
-            unchecked {
-                ++i;
-            }
         }
 
         return schedules;
@@ -797,12 +760,9 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         }
 
         // Sum claimable amounts across all schedules
-        for (uint256 i = 0; i < scheduleIds.length; ) {
+        for (uint256 i = 0; i < scheduleIds.length; ++i) {
             Schedule memory schedule = _scheduleById[scheduleIds[i]];
             claimableAmount += _getClaimableAmountForSchedule(schedule);
-            unchecked {
-                ++i;
-            }
         }
     }
 
@@ -1085,11 +1045,8 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             return 0;
         }
         // Sum claimable amounts across all periods
-        for (uint256 i = 0; i < schedule.periods.length; ) {
+        for (uint256 i = 0; i < schedule.periods.length; ++i) {
             totalClaimable += _getClaimableAmountForPeriod(schedule.periods[i]);
-            unchecked {
-                ++i;
-            }
         }
     }
 
