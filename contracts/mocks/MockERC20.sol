@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2024 Fireblocks <support@fireblocks.com>
+// SPDX-License-Identifier: UNLICENSED
 
 pragma solidity 0.8.29;
 
