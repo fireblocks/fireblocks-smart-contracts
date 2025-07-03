@@ -18,6 +18,7 @@ pragma solidity 0.8.29;
 
 /**
  * @dev Vesting Vault contract specific errors.
+ * @custom:security-contact support@fireblocks.com
  */
 interface IVestingVaultErrors {
     /**

@@ -19,6 +19,7 @@ pragma solidity 0.8.29;
  * @title IVestingVault
  * @author Fireblocks
  * @notice Interface for the VestingVault contract that manages token vesting schedules
+ * @custom:security-contact support@fireblocks.com
  */
 interface IVestingVault {
     /// Type declarations
