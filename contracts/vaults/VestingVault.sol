@@ -142,7 +142,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Calling Conditions:
      *
-     * - `vestingToken_` must have bytecode set and must implement the `decimals()` function of ERC20, with a
+     * - `vestingToken_` must have bytecode set
+     * - `vestingToken_` must implement the `decimals()` function of ERC20, with a
      *   return value > 0
      * - `defaultAdmin` must not be the zero address
      * - `vestingAdmin` must not be the zero address
@@ -160,7 +161,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         require(vestingAdmin != address(0), LibErrors.InvalidAddress());
 
         // Validate that vestingToken_ passes common ERC20 implementation checks
-        require(vestingToken_.code.length > 0, LibErrors.InvalidImplementation());
+        require(vestingToken_.code.length > 0, LibErrors.AddressEmptyCode(vestingToken_));
         // Check if decimals() function exists and returns > 0
         (bool success, bytes memory data) = vestingToken_.staticcall(abi.encodeWithSignature("decimals()"));
         require(success && data.length > 0, LibErrors.InvalidImplementation());
@@ -207,7 +208,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     function createSchedule(
         address beneficiary,
         bool isCancellable,
-        VestingPeriod[] calldata periods
+        VestingPeriodParam[] calldata periods
     ) external override onlyRole(VESTING_ADMIN_ROLE) returns (uint32 scheduleId) {
         // Validate inputs
         if (beneficiary == address(0)) revert LibErrors.InvalidAddress();
@@ -225,7 +226,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         uint256 totalAmount = 0;
         uint256 periodsLength = periods.length;
         for (uint256 i = 0; i < periodsLength; ) {
-            VestingPeriod calldata period = periods[i];
+            VestingPeriodParam calldata period = periods[i];
 
             // Validate period amount
             if (period.amount == 0) revert LibErrors.ZeroAmount();
@@ -243,8 +244,16 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
                 revert IVestingVaultErrors.InvalidStartTime(i, period.startPeriod);
             }
 
+            VestingPeriod memory newPeriod = VestingPeriod({
+                startPeriod: period.startPeriod,
+                endPeriod: period.endPeriod,
+                cliff: period.cliff,
+                amount: period.amount,
+                claimedAmount: 0
+            });
+
             // Store period and accumulate total amount
-            newSchedule.periods.push(period);
+            newSchedule.periods.push(newPeriod);
             totalAmount += period.amount;
             unchecked {
                 ++i;
@@ -372,6 +381,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Reverts if:
      * - There are no tokens available to be claimed for the specified schedule
+     * - The schedule is cancelled
      *
      * Emits {TokenRelease} events for each period with claimable tokens as part of {_claim}.
      *
@@ -389,6 +399,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
         // Validate schedule belongs to caller
         require(_msgSender() == scheduleBeneficiary, LibErrors.UnauthorizedCaller());
+        // Validate schedule is not cancelled
+        require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
 
         uint256 totalClaimable = 0;
         uint256 numPeriods = schedule.periods.length;
@@ -422,6 +434,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Reverts if:
      * - There are no tokens available to be claimed for the specified period
+     * - The schedule is cancelled
      *
      * Emits a {TokenRelease} event as part of {_claim}.
      *
@@ -440,6 +453,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
         // Validate schedule belongs to caller
         require(_msgSender() == scheduleBeneficiary, LibErrors.UnauthorizedCaller());
+        // Validate schedule is not cancelled
+        require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
         // Check if periodIndex is within bounds
         require(
             periodIndex < schedule.periods.length,
@@ -538,6 +553,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Reverts if:
      * - There are no tokens available to be released for the specified schedule
+     * - The schedule is cancelled
      *
      * Emits {TokenRelease} events for each period with releasable tokens as part of {_claim}.
      *
@@ -553,6 +569,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
+        // Validate schedule is not cancelled
+        require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
 
         uint256 totalReleasable = 0;
         uint256 numPeriods = schedule.periods.length;
@@ -588,6 +606,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Reverts if:
      * - There are no tokens available to be released for the specified period
+     * - The schedule is cancelled
      *
      * Emits a {TokenRelease} event as part of {_claim}.
      *
@@ -604,6 +623,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
+        // Validate schedule is not cancelled
+        require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
         // Check if periodIndex is within bounds
         require(
             periodIndex < schedule.periods.length,
@@ -782,13 +803,17 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     /**
      * @notice Returns the claimable amount for a specific schedule
      * @dev Calculates the sum of vested but unclaimed tokens across all periods
-     *      in the schedule. Returns zero for cancelled schedules.
+     *      in the schedule.
+     *
+     * Returns zero when:
+     * - schedule does not exist (e.g. `scheduleId` is 0),
+     * - schedule is cancelled,
+     * - global vesting mode is enabled but not started
      *
      * @param scheduleId The ID of the schedule
      * @return claimableAmount Amount that can be claimed from the schedule
      */
     function getClaimableAmount(uint256 scheduleId) external view override returns (uint256 claimableAmount) {
-        // If global vesting mode is enabled but not started, return 0
         if (globalVestingMode && !globalVestingStarted) {
             return 0;
         }
@@ -804,7 +829,12 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     /**
      * @notice Returns the claimable amount for a specific period
      * @dev Calculates the vested but unclaimed tokens for a single period.
-     *      Returns zero for cancelled schedules or invalid period indices.
+     *
+     * Returns zero when:
+     * - schedule does not exist (e.g. `scheduleId` is 0),
+     * - schedule is cancelled,
+     * - global vesting mode is enabled but not started,
+     * - `periodIndex` is out of bounds
      *
      * @param scheduleId The ID of the schedule
      * @param periodIndex The index of the period
@@ -814,7 +844,6 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         uint256 scheduleId,
         uint256 periodIndex
     ) external view override returns (uint256 claimableAmount) {
-        // If global vesting mode is enabled but not started, return 0
         if (globalVestingMode && !globalVestingStarted) {
             return 0;
         }
@@ -1051,17 +1080,19 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @notice Internal function to process token release to a beneficiary or admin
      * @dev Transfers tokens and emits events
      *
-     * This function performs an external call, and so it should only be called after all checks and effects
-     * have been performed.
+     * This function performs an external call and contrary to the Checks-Effects-Interactions (CEI) pattern, it has a
+     * side-effect following the transfer. Note that while it doesn't strictly follow the CEI pattern, it is safe to
+     * perform this interaction before the state update, because the `claimedAmount` checks and state-changing
+     * operation (which are a determinant for the transfer) are done before this call, in `_claim` or `cancelSchedule`.
      *
      * @param recipient The token recipient address
      * @param amount The amount to release
      */
     function _processTokenRelease(address recipient, uint256 amount) internal {
-        // Update committed tokens by decreasing the released amount
-        committedTokens -= amount;
-
-        // Transfer tokens
+        // Transfer tokens first (note: safe anti-pattern)
         vestingToken.safeTransfer(recipient, amount);
+
+        // Reduce the committed tokens constraint by the released amount
+        committedTokens -= amount;
     }
 }

@@ -40,6 +40,22 @@ interface IVestingVault {
     }
 
     /**
+     * @notice Represents vesting period parameters for schedule creation
+     * @dev This is the DTO for VestingPeriod, used for creating new schedules. It does not include the `claimedAmount`
+     *      property, which is only relevant after the schedule is created.
+     * @param startPeriod The start time of this vesting period
+     * @param endPeriod The end time of this vesting period
+     * @param cliff The cliff period for this vesting period
+     * @param amount The total amount of tokens in this vesting period (must be greater than zero)
+     */
+    struct VestingPeriodParam {
+        uint64 startPeriod;
+        uint64 endPeriod;
+        uint64 cliff;
+        uint256 amount;
+    }
+
+    /**
      * @notice Represents a complete vesting schedule for a beneficiary
      * @param id Global unique identifier for this schedule
      * @param beneficiary Owner of this schedule
@@ -121,7 +137,7 @@ interface IVestingVault {
     function createSchedule(
         address beneficiary,
         bool isCancellable,
-        VestingPeriod[] calldata periods
+        VestingPeriodParam[] calldata periods
     ) external returns (uint32 scheduleId);
 
     /**
