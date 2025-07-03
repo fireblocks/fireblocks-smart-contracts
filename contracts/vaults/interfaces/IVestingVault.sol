@@ -201,7 +201,7 @@ interface IVestingVault {
      * @param scheduleId The ID of the schedule
      * @return schedule The schedule with the specified ID
      */
-    function getSchedule(uint256 scheduleId) external view returns (Schedule memory schedule);
+    function getSchedule(uint32 scheduleId) external view returns (Schedule memory schedule);
 
     /**
      * @notice Returns all schedule IDs for a beneficiary

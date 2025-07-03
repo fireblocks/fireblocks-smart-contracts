@@ -772,7 +772,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      * @param scheduleId The ID of the schedule
      * @return schedule The schedule with the specified ID
      */
-    function getSchedule(uint256 scheduleId) external view override returns (Schedule memory schedule) {
+    function getSchedule(uint32 scheduleId) external view override returns (Schedule memory schedule) {
         schedule = scheduleById[scheduleId];
         if (schedule.id == 0) revert LibErrors.NotFound(scheduleId);
         return schedule;
