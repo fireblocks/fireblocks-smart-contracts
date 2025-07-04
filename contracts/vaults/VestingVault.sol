@@ -135,8 +135,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
 
     /**
      * @notice Constructs the VestingVault contract. It receives the token to manage, accounts for RBAC,
-     *         and defines whether to use global vesting mode. The token to manage must be minted, i.e. have a
-     *         non-zero total supply.
+     *         and defines whether to use global vesting mode. The token must be a valid ERC20 contract
+     *         with a non-zero total supply.
      *
      * @dev Initializer function that sets up the token to manage in the vault, RBAC roles, and Global Vesting Mode.
      *
@@ -145,8 +145,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Calling Conditions:
      *
-     * - `vestingToken_` must have bytecode set
-     * - `vestingToken_` must implement the `totalSupply()` function of ERC20, with a return value > 0
+     * - `vestingToken_` must be a contract address (non-zero bytecode)
+     * - `vestingToken_` must implement the `totalSupply()` function and return a value > 0
      * - `defaultAdmin` must not be the zero address
      * - `vestingAdmin` must not be the zero address
      *
