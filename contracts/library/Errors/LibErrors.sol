@@ -24,17 +24,6 @@ library LibErrors {
     /// Errors
 
     /**
-     * @notice Thrown when the account is barred to participate in the system.
-     * @param account The account to be checked.
-     */
-    error AccountUnauthorized(address account);
-
-    /**
-     * @notice Thrown when a Renounce Role is called.
-     */
-    error RenounceRoleDisabled();
-
-    /**
      * @dev Indicates a failure that an address is not valid.
      */
     error InvalidAddress();

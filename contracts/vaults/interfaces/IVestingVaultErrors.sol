@@ -72,12 +72,10 @@ interface IVestingVaultErrors {
     error InvalidCliff(uint256 periodIndex, uint256 cliff);
 
     /**
-     * @dev Indicates that the schedule index is not valid.
-     * @param beneficiary The address of the beneficiary.
-     * @param scheduleIndex The invalid schedule index.
+     * @dev Indicates that the vesting schedule period with the given index is not valid.
+     * @param scheduleId The ID of the vesting schedule.
+     * @param periodIndex The invalid vesting period index.
      */
-    error InvalidSchedule(address beneficiary, uint256 scheduleIndex);
-
     error InvalidVestingPeriodIndex(uint256 scheduleId, uint256 periodIndex);
 
     /**
