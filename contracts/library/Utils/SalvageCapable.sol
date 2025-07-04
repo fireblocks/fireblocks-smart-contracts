@@ -121,7 +121,7 @@ abstract contract SalvageCapable is Context {
 
     /**
      * @notice This function is designed to be overridden in inheriting contracts.
-     * @dev Override this function to implement RBAC control.
+     * @dev Override this function to implement Role-Based Access Control.
      *
      * @param salvagedToken The address of the token being salvaged.
      * @param amount The amount of the token being salvaged.
@@ -130,13 +130,13 @@ abstract contract SalvageCapable is Context {
 
     /**
      * @notice This function is designed to be overridden in inheriting contracts.
-     * @dev Override this function to implement RBAC control.
+     * @dev Override this function to implement Role-Based Access Control.
      */
     function _authorizeSalvageGas() internal virtual;
 
     /**
      * @notice This function is designed to be overridden in inheriting contracts.
-     * @dev Override this function to implement RBAC control.
+     * @dev Override this function to implement Role-Based Access Control.
      */
     function _authorizeSalvageNFT() internal virtual;
 }
