@@ -134,7 +134,10 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     /// Functions
 
     /**
-     * @notice Constructs the VestingVault contract
+     * @notice Constructs the VestingVault contract. It receives the token to manage, accounts for RBAC,
+     *         and defines whether to use global vesting mode. The token must be a valid ERC20 contract
+     *         with a non-zero total supply.
+     *
      * @dev Initializer function that sets up the token to manage in the vault, RBAC roles, and Global Vesting Mode.
      *
      * The FORFEITURE_ADMIN_ROLE and SALVAGE_ROLE are not granted at deploy time and must be granted separately when
@@ -142,8 +145,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Calling Conditions:
      *
-     * - `vestingToken_` must have bytecode set and must implement the `decimals()` function of ERC20, with a
-     *   return value > 0
+     * - `vestingToken_` must be a contract address (non-zero bytecode)
+     * - `vestingToken_` must implement the `totalSupply()` function and return a value > 0
      * - `defaultAdmin` must not be the zero address
      * - `vestingAdmin` must not be the zero address
      *
@@ -160,12 +163,12 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         require(vestingAdmin != address(0), LibErrors.InvalidAddress());
 
         // Validate that vestingToken_ passes common ERC20 implementation checks
-        require(vestingToken_.code.length > 0, LibErrors.InvalidImplementation());
-        // Check if decimals() function exists and returns > 0
-        (bool success, bytes memory data) = vestingToken_.staticcall(abi.encodeWithSignature("decimals()"));
+        require(vestingToken_.code.length > 0, LibErrors.AddressEmptyCode(vestingToken_));
+        // Check if totalSupply() function exists and returns > 0
+        (bool success, bytes memory data) = vestingToken_.staticcall(abi.encodeWithSignature("totalSupply()"));
         require(success && data.length > 0, LibErrors.InvalidImplementation());
-        uint8 decimals = abi.decode(data, (uint8));
-        require(decimals > 0, LibErrors.InvalidImplementation());
+        uint256 totalSupply = abi.decode(data, (uint256));
+        require(totalSupply > 0, LibErrors.InvalidImplementation());
 
         vestingToken = IERC20(vestingToken_);
         globalVestingMode = globalVestingMode_;
