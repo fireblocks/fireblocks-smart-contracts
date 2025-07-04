@@ -58,7 +58,7 @@ interface IVestingVault {
     /**
      * @notice Represents a complete vesting schedule for a beneficiary
      * @param id Global unique identifier for this schedule
-     * @param beneficiary Owner of this schedule
+     * @param beneficiary The recipient of vested tokens from this schedule
      * @param isCancellable Whether this schedule can be cancelled by admins
      * @param isCancelled Whether this schedule has been cancelled
      * @param periods Array of vesting periods that comprise this schedule
@@ -115,7 +115,7 @@ interface IVestingVault {
      * @param beneficiary The beneficiary whose schedule was cancelled
      * @param scheduleId The ID of the cancelled schedule
      * @param claimedAmount The amount transferred to beneficiary during cancellation
-     * @param reclaimedAmount The amount reclaimed by the contract
+     * @param reclaimedAmount The amount of unvested tokens transferred to the admin
      */
     event VestingScheduleCancelled(
         address indexed admin,
