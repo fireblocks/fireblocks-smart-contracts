@@ -35,8 +35,9 @@ library LibErrors {
 
     /**
      * @dev Indicates that the array length is invalid.
+     * @param invalidLength The length of the given array, which is not allowed.
      */
-    error InvalidArrayLength();
+    error InvalidArrayLength(uint256 invalidLength);
 
     /**
      * @dev Indicates that there was an attempt to recover tokens from an account that can participate in the system.
