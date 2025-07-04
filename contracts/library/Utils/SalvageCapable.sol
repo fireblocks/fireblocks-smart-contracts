@@ -74,9 +74,10 @@ abstract contract SalvageCapable is Context {
      * @param amount The amount to be salvaged.
      */
     function salvageERC20(IERC20 token, uint256 amount) external virtual {
+        require(amount > 0, LibErrors.ZeroAmount());
         _authorizeSalvageERC20(address(token), amount);
         emit TokenSalvaged(_msgSender(), address(token), amount);
-        _withdrawERC20(token, _msgSender(), amount);
+        token.safeTransfer(_msgSender(), amount);
     }
 
     /**
@@ -117,22 +118,6 @@ abstract contract SalvageCapable is Context {
         token.safeTransferFrom(address(this), _msgSender(), tokenId);
     }
 
-    /**
-     * @notice An internal function used to withdraw ERC20 tokens in the contract.
-     * @dev Internal function without access restriction.
-     *
-     * Calling Conditions:
-     *
-     * - `amount` is greater than 0.
-     *
-     * @param token The ERC20 asset which is to be withdrawn.
-     * @param recipient The address to which the tokens are to be sent.
-     * @param amount The amount to be withdrawn.
-     */
-    function _withdrawERC20(IERC20 token, address recipient, uint256 amount) internal virtual {
-        require(amount > 0, LibErrors.ZeroAmount());
-        token.safeTransfer(recipient, amount);
-    }
 
     /**
      * @notice This function is designed to be overridden in inheriting contracts.
