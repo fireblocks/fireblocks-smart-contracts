@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2024 Fireblocks <support@fireblocks.com>
+// Copyright (C) 2025 Fireblocks <support@fireblocks.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-pragma solidity ^0.8.22;
+pragma solidity 0.8.29;
 
 import {IERC20} from "@openzeppelin/contracts-v5/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts-v5/token/ERC721/IERC721.sol";
@@ -26,6 +26,7 @@ import {LibErrors} from "../../library/Errors/LibErrors.sol";
  * @title SalvageCapable
  * @author Fireblocks
  * @notice This abstract contract provides internal contract logic for rescuing tokens and ETH.
+ * @custom:security-contact support@fireblocks.com
  */
 abstract contract SalvageCapable is Context {
     using SafeERC20 for IERC20;
@@ -73,7 +74,7 @@ abstract contract SalvageCapable is Context {
      * @param amount The amount to be salvaged.
      */
     function salvageERC20(IERC20 token, uint256 amount) external virtual {
-        _authorizeSalvageERC20(address(token));
+        _authorizeSalvageERC20(address(token), amount);
         emit TokenSalvaged(_msgSender(), address(token), amount);
         _withdrawERC20(token, _msgSender(), amount);
     }
@@ -89,15 +90,11 @@ abstract contract SalvageCapable is Context {
      * @param amount The amount to be salvaged.
      */
     function salvageGas(uint256 amount) external virtual {
-        if (amount == 0) {
-            revert LibErrors.ZeroAmount();
-        }
+        require(amount > 0, LibErrors.ZeroAmount());
         _authorizeSalvageGas();
         emit GasTokenSalvaged(_msgSender(), amount);
         (bool succeed, ) = _msgSender().call{value: amount}("");
-        if (!succeed) {
-            revert LibErrors.SalvageGasFailed();
-        }
+        require(succeed, LibErrors.SalvageGasFailed());
     }
 
     /**
@@ -133,9 +130,7 @@ abstract contract SalvageCapable is Context {
      * @param amount The amount to be withdrawn.
      */
     function _withdrawERC20(IERC20 token, address recipient, uint256 amount) internal virtual {
-        if (amount == 0) {
-            revert LibErrors.ZeroAmount();
-        }
+        require(amount > 0, LibErrors.ZeroAmount());
         token.safeTransfer(recipient, amount);
     }
 
@@ -144,8 +139,9 @@ abstract contract SalvageCapable is Context {
      * @dev Override this function to implement RBAC control.
      *
      * @param salvagedToken The address of the token being salvaged.
+     * @param amount The amount of the token being salvaged.
      */
-    function _authorizeSalvageERC20(address salvagedToken) internal virtual;
+    function _authorizeSalvageERC20(address salvagedToken, uint256 amount) internal virtual;
 
     /**
      * @notice This function is designed to be overridden in inheriting contracts.
