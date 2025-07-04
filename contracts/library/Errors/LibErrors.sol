@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2024 Fireblocks <support@fireblocks.com>
+// Copyright (C) 2025 Fireblocks <support@fireblocks.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -24,25 +24,15 @@ library LibErrors {
     /// Errors
 
     /**
-     * @notice Thrown when the account is barred to participate in the system.
-     * @param account The account to be checked.
-     */
-    error AccountUnauthorized(address account);
-
-    /**
-     * @notice Thrown when a Renounce Role is called.
-     */
-    error RenounceRoleDisabled();
-
-    /**
      * @dev Indicates a failure that an address is not valid.
      */
     error InvalidAddress();
 
     /**
      * @dev Indicates that the array length is invalid.
+     * @param invalidLength The length of the given array, which is not allowed.
      */
-    error InvalidArrayLength();
+    error InvalidArrayLength(uint256 invalidLength);
 
     /**
      * @dev Indicates that there was an attempt to recover tokens from an account that can participate in the system.

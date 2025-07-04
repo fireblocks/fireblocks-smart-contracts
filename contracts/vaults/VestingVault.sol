@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2024 Fireblocks <support@fireblocks.com>
+// Copyright (C) 2025 Fireblocks <support@fireblocks.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -51,6 +51,7 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
  *        which would break vesting accounting as the contract tracks fixed amounts at schedule creation. Using
  *        rebasing tokens will lead to potential loss of funds.
  *      - Maximum of (2^32 - 1) vesting schedules.
+ *      - Each vesting schedule can have at most 256 periods.
  *
  * @custom:security-contact support@fireblocks.com
  */
@@ -116,13 +117,20 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @notice Mapping from schedule ID to schedule data
      * @dev Primary storage for all schedules
      */
-    mapping(uint256 => Schedule) public scheduleById;
+    mapping(uint256 scheduleId => Schedule schedule) internal _scheduleById;
 
     /**
      * @notice Mapping from beneficiary address to their schedule IDs
      * @dev Enables querying all schedules for a beneficiary
      */
-    mapping(address => uint32[]) public beneficiaryToScheduleIds;
+    mapping(address beneficiary => uint32[] scheduleIds) internal _beneficiaryToScheduleIds;
+
+    /**
+     * @notice Mapping from schedule ID to the period bitmap
+     * @dev Enables checking which periods are still active for a schedule (not fully claimed or forfeited)
+     *      Limited to 256 periods per schedule for simplicity. Each bit represents a period index.
+     */
+    mapping(uint32 scheduleId => uint256 activePeriodsBitmap) internal _scheduleIdToActivePeriodsBitmap;
 
     /**
      * @notice Current amount of tokens committed to vesting schedules
@@ -186,7 +194,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * - The caller must have `VESTING_ADMIN_ROLE`
      * - `beneficiary` must not be the zero address
-     * - `periods` array must not be empty
+     * - `periods` array must not be empty and can have at most 256 elements
      *
      * Additional validations that may cause reverts:
      * - The contract must have sufficient token balance to cover the total schedule amount
@@ -208,14 +216,15 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         address beneficiary,
         bool isCancellable,
         VestingPeriod[] calldata periods
-    ) external override onlyRole(VESTING_ADMIN_ROLE) returns (uint32 scheduleId) {
+    ) external virtual override onlyRole(VESTING_ADMIN_ROLE) returns (uint32 scheduleId) {
         // Validate inputs
-        if (beneficiary == address(0)) revert LibErrors.InvalidAddress();
-        if (periods.length == 0) revert LibErrors.InvalidArrayLength();
+        uint256 periodsLength = periods.length;
+        require(beneficiary != address(0), LibErrors.InvalidAddress());
+        require(periodsLength > 0 && periodsLength <= 256, LibErrors.InvalidArrayLength(periodsLength));
 
         // Generate new schedule ID and initialize storage
         scheduleId = ++scheduleCounter;
-        Schedule storage newSchedule = scheduleById[scheduleId];
+        Schedule storage newSchedule = _scheduleById[scheduleId];
         newSchedule.id = scheduleId;
         newSchedule.beneficiary = beneficiary;
         newSchedule.isCancellable = isCancellable;
@@ -223,47 +232,52 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
 
         // Validate periods and copy to storage in single loop
         uint256 totalAmount = 0;
-        uint256 periodsLength = periods.length;
-        for (uint256 i = 0; i < periodsLength; ) {
+        for (uint256 i = 0; i < periodsLength; ++i) {
             VestingPeriod calldata period = periods[i];
 
             // Validate period amount
-            if (period.amount == 0) revert LibErrors.ZeroAmount();
+            require(period.amount > 0, LibErrors.ZeroAmount());
 
             // Validate period times
-            if (period.endPeriod <= period.startPeriod) revert IVestingVaultErrors.InvalidEndTime(i, period.endPeriod);
+            require(period.endPeriod > period.startPeriod, IVestingVaultErrors.InvalidEndTime(i, period.endPeriod));
 
             // Validate cliff doesn't exceed vesting duration
-            if (period.cliff > 0 && period.startPeriod + period.cliff > period.endPeriod) {
-                revert IVestingVaultErrors.InvalidCliff(i, period.cliff);
+            if (period.cliff > 0) {
+                require(
+                    period.startPeriod + period.cliff <= period.endPeriod,
+                    IVestingVaultErrors.InvalidCliff(i, period.cliff)
+                );
             }
 
             // In non-global mode, validate start time is not in the past
-            if (!globalVestingMode && period.startPeriod < block.timestamp) {
-                revert IVestingVaultErrors.InvalidStartTime(i, period.startPeriod);
+            if (!globalVestingMode) {
+                require(
+                    period.startPeriod >= block.timestamp,
+                    IVestingVaultErrors.InvalidStartTime(i, period.startPeriod)
+                );
             }
 
             // Store period and accumulate total amount
             newSchedule.periods.push(period);
             totalAmount += period.amount;
-            unchecked {
-                ++i;
-            }
+            // Set period as active in bitmap for gas optimization
+            _scheduleIdToActivePeriodsBitmap[scheduleId] |= (1 << i);
         }
 
         // Check contract has sufficient uncommitted balance
         uint256 contractBalance = vestingToken.balanceOf(address(this));
         uint256 availableBalance = contractBalance - committedTokens;
-
-        if (availableBalance < totalAmount)
-            revert IVestingVaultErrors.InsufficientBalance(contractBalance, availableBalance);
+        require(
+            availableBalance >= totalAmount,
+            IVestingVaultErrors.InsufficientBalance(contractBalance, availableBalance)
+        );
 
         // Add schedule ID to beneficiary's list and update committed tokens
-        beneficiaryToScheduleIds[beneficiary].push(scheduleId);
+        _beneficiaryToScheduleIds[beneficiary].push(scheduleId);
         committedTokens += totalAmount;
 
         // Emit event with the complete schedule
-        emit VestingScheduleCreated(msg.sender, beneficiary, scheduleId, newSchedule);
+        emit VestingScheduleCreated(_msgSender(), beneficiary, scheduleId, newSchedule);
     }
 
     /**
@@ -279,7 +293,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Emits a {GlobalVestingStarted} event.
      */
-    function startGlobalVesting() external override onlyRole(VESTING_ADMIN_ROLE) {
+    function startGlobalVesting() external virtual override onlyRole(VESTING_ADMIN_ROLE) {
         // Ensure global vesting mode is enabled
         require(globalVestingMode, IVestingVaultErrors.GlobalVestingNotEnabled());
         // Check global vesting hasn't already started
@@ -311,50 +325,42 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * Emits {TokenRelease} events for each schedule and period with claimable tokens.
      */
-    function claim() external override {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+    function claim() external virtual override {
+        _validateGlobalVestingStatus();
 
         address beneficiary = _msgSender();
-        uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
+        uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
         uint256 scheduleCount = scheduleIds.length;
 
-        if (scheduleCount == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(scheduleCount > 0, IVestingVaultErrors.NoTokensToClaim());
 
         uint256 totalClaimable = 0;
 
         // Process each schedule
-        for (uint256 i = 0; i < scheduleCount; ) {
+        for (uint256 i = 0; i < scheduleCount; ++i) {
             uint32 scheduleId = scheduleIds[i];
-            Schedule storage schedule = scheduleById[scheduleId];
+            Schedule storage schedule = _scheduleById[scheduleId];
             // Skip cancelled schedules
             if (schedule.isCancelled) {
-                unchecked {
-                    ++i;
-                }
                 continue;
             }
-            // Process each period in the schedule
-            uint256 numPeriods = schedule.periods.length;
-            for (uint256 j = 0; j < numPeriods; ) {
-                uint256 claimableAmount = _claim(schedule, scheduleId, j);
-                totalClaimable += claimableAmount;
-                unchecked {
-                    ++j;
-                }
+            uint256 periodBitmap = _scheduleIdToActivePeriodsBitmap[scheduleId];
+            // Skip if no active periods
+            if (periodBitmap == 0) {
+                continue;
             }
-            unchecked {
-                ++i;
+            uint256 numPeriods = schedule.periods.length;
+            // Process schedule periods
+            for (uint256 j = 0; j < numPeriods; ++j) {
+                // Check if this specific period is active using bit position
+                if ((periodBitmap >> j) & 1 == 1) {
+                    uint256 claimableAmount = _claim(schedule, j);
+                    totalClaimable += claimableAmount;
+                }
             }
         }
 
-        if (totalClaimable == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(totalClaimable > 0, IVestingVaultErrors.NoTokensToClaim());
         // Transfer all claimable tokens
         _processTokenRelease(beneficiary, totalClaimable);
     }
@@ -377,13 +383,10 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * @param scheduleId The ID of the schedule to claim from
      */
-    function claim(uint256 scheduleId) external override {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+    function claim(uint256 scheduleId) external virtual override {
+        _validateGlobalVestingStatus();
 
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -391,19 +394,21 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         require(_msgSender() == scheduleBeneficiary, LibErrors.UnauthorizedCaller());
 
         uint256 totalClaimable = 0;
+        uint256 periodBitmap = _scheduleIdToActivePeriodsBitmap[uint32(scheduleId)];
+        // Validate there are active periods
+        require(periodBitmap > 0, IVestingVaultErrors.NoTokensToClaim());
+
         uint256 numPeriods = schedule.periods.length;
-        // Process each period in the schedule
-        for (uint256 i = 0; i < numPeriods; ) {
-            uint256 claimableAmount = _claim(schedule, scheduleId, i);
-            totalClaimable += claimableAmount;
-            unchecked {
-                ++i;
+        // Process schedule periods
+        for (uint256 i = 0; i < numPeriods; ++i) {
+            // Check if this specific period is active using bit position
+            if ((periodBitmap >> i) & 1 == 1) {
+                uint256 claimableAmount = _claim(schedule, i);
+                totalClaimable += claimableAmount;
             }
         }
 
-        if (totalClaimable == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(totalClaimable > 0, IVestingVaultErrors.NoTokensToClaim());
         // Transfer all claimable tokens
         _processTokenRelease(scheduleBeneficiary, totalClaimable);
     }
@@ -428,13 +433,10 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param scheduleId The ID of the schedule
      * @param periodIndex The index of the period within the schedule
      */
-    function claim(uint256 scheduleId, uint256 periodIndex) external override {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+    function claim(uint256 scheduleId, uint256 periodIndex) external virtual override {
+        _validateGlobalVestingStatus();
 
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -446,10 +448,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             IVestingVaultErrors.InvalidVestingPeriodIndex(scheduleId, periodIndex)
         );
         // Process the specific period
-        uint256 claimableAmount = _claim(schedule, scheduleId, periodIndex);
-        if (claimableAmount == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        uint256 claimableAmount = _claim(schedule, periodIndex);
+        require(claimableAmount > 0, IVestingVaultErrors.NoTokensToClaim());
         // Transfer tokens
         _processTokenRelease(scheduleBeneficiary, claimableAmount);
     }
@@ -476,50 +476,41 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * @param beneficiary The beneficiary to release tokens for
      */
-    function release(address beneficiary) external override onlyRole(VESTING_ADMIN_ROLE) {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+    function release(address beneficiary) external virtual override onlyRole(VESTING_ADMIN_ROLE) {
+        _validateGlobalVestingStatus();
 
-        uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
+        uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
         uint256 scheduleCount = scheduleIds.length;
 
-        if (scheduleCount == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(scheduleCount > 0, IVestingVaultErrors.NoTokensToClaim());
 
         uint256 totalReleasable = 0;
 
         // Process each schedule
-        for (uint256 i = 0; i < scheduleCount; ) {
+        for (uint256 i = 0; i < scheduleCount; ++i) {
             uint32 scheduleId = scheduleIds[i];
-            Schedule storage schedule = scheduleById[scheduleId];
-
+            Schedule storage schedule = _scheduleById[scheduleId];
             // Skip cancelled schedules
             if (schedule.isCancelled) {
-                unchecked {
-                    ++i;
-                }
                 continue;
             }
-            // Process each period in the schedule
-            uint256 numPeriods = schedule.periods.length;
-            for (uint256 j = 0; j < numPeriods; ) {
-                uint256 releasableAmount = _claim(schedule, scheduleId, j);
-                totalReleasable += releasableAmount;
-                unchecked {
-                    ++j;
-                }
+            uint256 periodBitmap = _scheduleIdToActivePeriodsBitmap[scheduleId];
+            // Skip if no active periods
+            if (periodBitmap == 0) {
+                continue;
             }
-            unchecked {
-                ++i;
+            uint256 numPeriods = schedule.periods.length;
+            // Process schedule periods
+            for (uint256 j = 0; j < numPeriods; ++j) {
+                // Check if this specific period is active using bit position
+                if ((periodBitmap >> j) & 1 == 1) {
+                    uint256 releasableAmount = _claim(schedule, j);
+                    totalReleasable += releasableAmount;
+                }
             }
         }
 
-        if (totalReleasable == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(totalReleasable > 0, IVestingVaultErrors.NoTokensToClaim());
 
         // Transfer all releasable tokens
         _processTokenRelease(beneficiary, totalReleasable);
@@ -543,33 +534,30 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * @param scheduleId The ID of the schedule to release from
      */
-    function release(uint256 scheduleId) external override onlyRole(VESTING_ADMIN_ROLE) {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+    function release(uint256 scheduleId) external virtual override onlyRole(VESTING_ADMIN_ROLE) {
+        _validateGlobalVestingStatus();
 
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
 
         uint256 totalReleasable = 0;
-        uint256 numPeriods = schedule.periods.length;
+        uint256 periodBitmap = _scheduleIdToActivePeriodsBitmap[uint32(scheduleId)];
+        // Validate there are active periods
+        require(periodBitmap > 0, IVestingVaultErrors.NoTokensToClaim());
 
-        // Process each period in the schedule
-        for (uint256 i = 0; i < numPeriods; ) {
-            uint256 releasableAmount = _claim(schedule, scheduleId, i);
-            totalReleasable += releasableAmount;
-            unchecked {
-                ++i;
+        uint256 numPeriods = schedule.periods.length;
+        // Process schedule periods
+        for (uint256 i = 0; i < numPeriods; ++i) {
+            // Check if this specific period is active using bit position
+            if ((periodBitmap >> i) & 1 == 1) {
+                uint256 releasableAmount = _claim(schedule, i);
+                totalReleasable += releasableAmount;
             }
         }
 
-        if (totalReleasable == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
-
+        require(totalReleasable > 0, IVestingVaultErrors.NoTokensToClaim());
         // Transfer all releasable tokens
         _processTokenRelease(scheduleBeneficiary, totalReleasable);
     }
@@ -594,13 +582,10 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param scheduleId The ID of the schedule
      * @param periodIndex The index of the period within the schedule
      */
-    function release(uint256 scheduleId, uint256 periodIndex) external override onlyRole(VESTING_ADMIN_ROLE) {
-        // Check global vesting status if in global mode
-        if (globalVestingMode && !globalVestingStarted) {
-            revert IVestingVaultErrors.GlobalVestingNotStarted();
-        }
+    function release(uint256 scheduleId, uint256 periodIndex) external virtual override onlyRole(VESTING_ADMIN_ROLE) {
+        _validateGlobalVestingStatus();
 
-        Schedule storage schedule = scheduleById[scheduleId];
+        Schedule storage schedule = _scheduleById[scheduleId];
         address scheduleBeneficiary = schedule.beneficiary;
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -610,11 +595,9 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
             IVestingVaultErrors.InvalidVestingPeriodIndex(scheduleId, periodIndex)
         );
         // Process the specific period
-        uint256 releasableAmount = _claim(schedule, scheduleId, periodIndex);
+        uint256 releasableAmount = _claim(schedule, periodIndex);
 
-        if (releasableAmount == 0) {
-            revert IVestingVaultErrors.NoTokensToClaim();
-        }
+        require(releasableAmount > 0, IVestingVaultErrors.NoTokensToClaim());
 
         // Transfer tokens
         _processTokenRelease(scheduleBeneficiary, releasableAmount);
@@ -638,8 +621,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      *
      * @param scheduleId The ID of the schedule to cancel
      */
-    function cancelSchedule(uint256 scheduleId) external override onlyRole(FORFEITURE_ADMIN_ROLE) {
-        Schedule storage schedule = scheduleById[scheduleId];
+    function cancelSchedule(uint256 scheduleId) external virtual override onlyRole(FORFEITURE_ADMIN_ROLE) {
+        Schedule storage schedule = _scheduleById[scheduleId];
 
         // Validate schedule exists
         require(schedule.id != 0, LibErrors.NotFound(scheduleId));
@@ -655,18 +638,15 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
 
         // Calculate vested and total amounts across all periods
         uint256 periodsLength = schedule.periods.length;
-        for (uint256 i = 0; i < periodsLength; ) {
+        for (uint256 i = 0; i < periodsLength; ++i) {
             VestingPeriod storage period = schedule.periods[i];
 
             // Skip fully claimed periods
-            if (period.claimedAmount == period.amount) {
-                unchecked {
-                    ++i;
-                }
+            if (period.claimedAmount >= period.amount) {
                 continue;
             }
             // Claim any vested amount
-            uint256 claimableAmount = _claim(schedule, scheduleId, i);
+            uint256 claimableAmount = _claim(schedule, i);
             claimAmount += claimableAmount;
 
             // Calculate unvested amount (total - already claimed)
@@ -675,10 +655,6 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
 
             // Mark the full period as claimed to prevent future claims
             period.claimedAmount = period.amount;
-
-            unchecked {
-                ++i;
-            }
         }
         // Mark schedule as cancelled
         schedule.isCancelled = true;
@@ -710,15 +686,12 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param beneficiary The beneficiary address
      * @return schedules Array of schedules for the beneficiary
      */
-    function getSchedules(address beneficiary) external view override returns (Schedule[] memory schedules) {
-        uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
+    function getSchedules(address beneficiary) external view virtual override returns (Schedule[] memory schedules) {
+        uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
         schedules = new Schedule[](scheduleIds.length);
 
-        for (uint256 i = 0; i < scheduleIds.length; ) {
-            schedules[i] = scheduleById[scheduleIds[i]];
-            unchecked {
-                ++i;
-            }
+        for (uint256 i = 0; i < scheduleIds.length; ++i) {
+            schedules[i] = _scheduleById[scheduleIds[i]];
         }
 
         return schedules;
@@ -735,9 +708,9 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param scheduleId The ID of the schedule
      * @return schedule The schedule with the specified ID
      */
-    function getSchedule(uint256 scheduleId) external view override returns (Schedule memory schedule) {
-        schedule = scheduleById[scheduleId];
-        if (schedule.id == 0) revert LibErrors.NotFound(scheduleId);
+    function getSchedule(uint32 scheduleId) external view virtual override returns (Schedule memory schedule) {
+        schedule = _scheduleById[scheduleId];
+        require(schedule.id != 0, LibErrors.NotFound(scheduleId));
         return schedule;
     }
 
@@ -749,8 +722,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param beneficiary The beneficiary address
      * @return scheduleIds Array of schedule IDs for the beneficiary
      */
-    function getScheduleIds(address beneficiary) external view override returns (uint32[] memory scheduleIds) {
-        return beneficiaryToScheduleIds[beneficiary];
+    function getScheduleIds(address beneficiary) external view virtual override returns (uint32[] memory scheduleIds) {
+        return _beneficiaryToScheduleIds[beneficiary];
     }
 
     /**
@@ -761,8 +734,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param beneficiary The beneficiary address
      * @return claimableAmount Total amount that can be claimed
      */
-    function getClaimableAmount(address beneficiary) external view override returns (uint256 claimableAmount) {
-        uint32[] memory scheduleIds = beneficiaryToScheduleIds[beneficiary];
+    function getClaimableAmount(address beneficiary) external view virtual override returns (uint256 claimableAmount) {
+        uint32[] memory scheduleIds = _beneficiaryToScheduleIds[beneficiary];
 
         // If global vesting mode is enabled but not started, return 0
         if (globalVestingMode && !globalVestingStarted) {
@@ -770,12 +743,9 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         }
 
         // Sum claimable amounts across all schedules
-        for (uint256 i = 0; i < scheduleIds.length; ) {
-            Schedule memory schedule = scheduleById[scheduleIds[i]];
+        for (uint256 i = 0; i < scheduleIds.length; ++i) {
+            Schedule memory schedule = _scheduleById[scheduleIds[i]];
             claimableAmount += _getClaimableAmountForSchedule(schedule);
-            unchecked {
-                ++i;
-            }
         }
     }
 
@@ -787,13 +757,13 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param scheduleId The ID of the schedule
      * @return claimableAmount Amount that can be claimed from the schedule
      */
-    function getClaimableAmount(uint256 scheduleId) external view override returns (uint256 claimableAmount) {
+    function getClaimableAmount(uint256 scheduleId) external view virtual override returns (uint256 claimableAmount) {
         // If global vesting mode is enabled but not started, return 0
         if (globalVestingMode && !globalVestingStarted) {
             return 0;
         }
 
-        Schedule memory schedule = scheduleById[scheduleId];
+        Schedule memory schedule = _scheduleById[scheduleId];
         if (schedule.id == 0) {
             return 0;
         }
@@ -813,13 +783,13 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
     function getClaimableAmount(
         uint256 scheduleId,
         uint256 periodIndex
-    ) external view override returns (uint256 claimableAmount) {
+    ) external view virtual override returns (uint256 claimableAmount) {
         // If global vesting mode is enabled but not started, return 0
         if (globalVestingMode && !globalVestingStarted) {
             return 0;
         }
 
-        Schedule memory schedule = scheduleById[scheduleId];
+        Schedule memory schedule = _scheduleById[scheduleId];
         if (schedule.id == 0 || schedule.isCancelled || periodIndex >= schedule.periods.length) {
             return 0;
         }
@@ -885,9 +855,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param account The account renouncing the role
      */
     function renounceRole(bytes32 role, address account) public virtual override {
-        if (role == DEFAULT_ADMIN_ROLE) {
-            revert LibErrors.DefaultAdminError();
-        }
+        require(role != DEFAULT_ADMIN_ROLE, LibErrors.DefaultAdminError());
         super.renounceRole(role, account);
     }
 
@@ -905,8 +873,8 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param account The account from which the role is being revoked
      */
     function revokeRole(bytes32 role, address account) public virtual override {
-        if (role == DEFAULT_ADMIN_ROLE && account == _msgSender()) {
-            revert LibErrors.DefaultAdminError();
+        if (account == _msgSender()) {
+            require(role != DEFAULT_ADMIN_ROLE, LibErrors.DefaultAdminError());
         }
         super.revokeRole(role, account);
     }
@@ -930,14 +898,9 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * Emits a {TokenRelease} event.
      *
      * @param schedule The schedule storage reference
-     * @param scheduleId The ID of the schedule (for event emission)
      * @param periodIndex The index of the period within the schedule
      */
-    function _claim(
-        Schedule storage schedule,
-        uint256 scheduleId,
-        uint256 periodIndex
-    ) internal returns (uint256 claimableAmount) {
+    function _claim(Schedule storage schedule, uint256 periodIndex) private returns (uint256 claimableAmount) {
         // Process the specific period
         VestingPeriod storage period = schedule.periods[periodIndex];
         claimableAmount = _getClaimableAmountForPeriod(period);
@@ -945,8 +908,12 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         // Update claimed amount
         if (claimableAmount > 0) {
             period.claimedAmount += claimableAmount;
+            // If period is now fully claimed, remove it from active bitmap for gas optimization
+            if (period.claimedAmount >= period.amount) {
+                _scheduleIdToActivePeriodsBitmap[schedule.id] &= ~(1 << periodIndex);
+            }
             // Emit event
-            emit TokenRelease(_msgSender(), schedule.beneficiary, scheduleId, periodIndex, claimableAmount);
+            emit TokenRelease(_msgSender(), schedule.beneficiary, schedule.id, periodIndex, claimableAmount);
         }
     }
 
@@ -955,9 +922,9 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @dev Implements linear vesting with optional cliff period
      *
      * @param period The vesting period to calculate for
-     * @return vestedAmount The amount vested up to the current time
+     * @return The amount vested up to the current time
      */
-    function _getVestedAmountForPeriod(VestingPeriod memory period) internal view returns (uint256 vestedAmount) {
+    function _getVestedAmountForPeriod(VestingPeriod memory period) internal view virtual returns (uint256) {
         uint256 currentTime = block.timestamp;
         uint256 vestingStartTime;
         uint256 vestingEndTime;
@@ -999,7 +966,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
         // Therefore, vestingDuration > 0
 
         // Calculate vested amount using proportion of time elapsed (linear vesting)
-        vestedAmount = (period.amount * elapsedTime) / vestingDuration;
+        return (period.amount * elapsedTime) / vestingDuration;
     }
 
     /**
@@ -1011,9 +978,11 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param period The vesting period to calculate for
      * @return claimableAmount The amount that can be claimed
      */
-    function _getClaimableAmountForPeriod(VestingPeriod memory period) internal view returns (uint256 claimableAmount) {
+    function _getClaimableAmountForPeriod(
+        VestingPeriod memory period
+    ) internal view virtual returns (uint256 claimableAmount) {
         // Skip if already fully claimed
-        if (period.claimedAmount == period.amount) {
+        if (period.claimedAmount >= period.amount) {
             return 0;
         }
         uint256 vestedAmount = _getVestedAmountForPeriod(period);
@@ -1033,17 +1002,16 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param schedule The schedule to calculate for
      * @return totalClaimable The total claimable amount
      */
-    function _getClaimableAmountForSchedule(Schedule memory schedule) internal view returns (uint256 totalClaimable) {
+    function _getClaimableAmountForSchedule(
+        Schedule memory schedule
+    ) internal view virtual returns (uint256 totalClaimable) {
         // If schedule is cancelled, nothing is claimable
         if (schedule.isCancelled) {
             return 0;
         }
         // Sum claimable amounts across all periods
-        for (uint256 i = 0; i < schedule.periods.length; ) {
+        for (uint256 i = 0; i < schedule.periods.length; ++i) {
             totalClaimable += _getClaimableAmountForPeriod(schedule.periods[i]);
-            unchecked {
-                ++i;
-            }
         }
     }
 
@@ -1057,11 +1025,23 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * @param recipient The token recipient address
      * @param amount The amount to release
      */
-    function _processTokenRelease(address recipient, uint256 amount) internal {
+    function _processTokenRelease(address recipient, uint256 amount) private {
         // Update committed tokens by decreasing the released amount
         committedTokens -= amount;
 
         // Transfer tokens
         vestingToken.safeTransfer(recipient, amount);
+    }
+
+    /// Internal Functions - Global Vesting Status checks
+
+    /**
+     * @dev Validates that global vesting has started if global vesting mode is enabled
+     * @notice Reverts if global vesting mode is enabled but not yet started
+     */
+    function _validateGlobalVestingStatus() internal view virtual {
+        if (globalVestingMode) {
+            require(globalVestingStarted, IVestingVaultErrors.GlobalVestingNotStarted());
+        }
     }
 }

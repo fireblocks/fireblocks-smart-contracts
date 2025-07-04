@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2024 Fireblocks <support@fireblocks.com>
+// Copyright (C) 2025 Fireblocks <support@fireblocks.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,7 @@ pragma solidity 0.8.29;
  * @title IVestingVault
  * @author Fireblocks
  * @notice Interface for the VestingVault contract that manages token vesting schedules
+ * @custom:security-contact support@fireblocks.com
  */
 interface IVestingVault {
     /// Type declarations
@@ -184,7 +185,7 @@ interface IVestingVault {
      * @param scheduleId The ID of the schedule
      * @return schedule The schedule with the specified ID
      */
-    function getSchedule(uint256 scheduleId) external view returns (Schedule memory schedule);
+    function getSchedule(uint32 scheduleId) external view returns (Schedule memory schedule);
 
     /**
      * @notice Returns all schedule IDs for a beneficiary

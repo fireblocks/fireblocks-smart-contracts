@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2024 Fireblocks <support@fireblocks.com>
+// Copyright (C) 2025 Fireblocks <support@fireblocks.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -26,6 +26,7 @@ import {LibErrors} from "../../library/Errors/LibErrors.sol";
  * @title SalvageCapable
  * @author Fireblocks
  * @notice This abstract contract provides internal contract logic for rescuing tokens and ETH.
+ * @custom:security-contact support@fireblocks.com
  */
 abstract contract SalvageCapable is Context {
     using SafeERC20 for IERC20;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2024 Fireblocks <support@fireblocks.com>
+// Copyright (C) 2025 Fireblocks <support@fireblocks.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,7 @@ pragma solidity 0.8.29;
 
 /**
  * @dev Vesting Vault contract specific errors.
+ * @custom:security-contact support@fireblocks.com
  */
 interface IVestingVaultErrors {
     /**
@@ -71,12 +72,10 @@ interface IVestingVaultErrors {
     error InvalidCliff(uint256 periodIndex, uint256 cliff);
 
     /**
-     * @dev Indicates that the schedule index is not valid.
-     * @param beneficiary The address of the beneficiary.
-     * @param scheduleIndex The invalid schedule index.
+     * @dev Indicates that the vesting schedule period with the given index is not valid.
+     * @param scheduleId The ID of the vesting schedule.
+     * @param periodIndex The invalid vesting period index.
      */
-    error InvalidSchedule(address beneficiary, uint256 scheduleIndex);
-
     error InvalidVestingPeriodIndex(uint256 scheduleId, uint256 periodIndex);
 
     /**
