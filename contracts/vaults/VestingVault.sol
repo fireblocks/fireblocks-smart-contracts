@@ -849,7 +849,7 @@ contract VestingVault is Context, AccessControl, SalvageCapable, IVestingVault, 
      * - `salvagedToken` is the same as `vestingToken`
      * @param salvagedToken The address of the token being salvaged
      */
-    function _authorizeSalvageERC20(address salvagedToken) internal virtual override {
+    function _authorizeSalvageERC20(address salvagedToken, uint256 /* amount */) internal virtual override {
         require(salvagedToken != address(vestingToken), LibErrors.InvalidAddress());
         _checkRole(SALVAGE_ROLE);
     }
