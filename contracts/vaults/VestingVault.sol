@@ -57,6 +57,7 @@ import {LibErrors} from "../library/Errors/LibErrors.sol";
  *        which would break vesting accounting as the contract would receive less tokens than expected.
  *        Using fee-on-transfer tokens will lead to incorrect vesting calculations and potential loss of funds.
  *      - Maximum of (2^32 - 1) vesting schedules.
+ *      - Each vesting schedule can have at most 256 periods.
  *
  * @custom:security-contact support@fireblocks.com
  */
@@ -149,6 +150,13 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
     mapping(address beneficiary => uint32[] scheduleIds) internal _beneficiaryToScheduleIds;
 
     /**
+     * @notice Mapping from schedule ID to the period bitmap
+     * @dev Enables checking which periods are still active for a schedule (not fully claimed or forfeited)
+     *      Limited to 256 periods per schedule for simplicity. Each bit represents a period index.
+     */
+    mapping(uint32 scheduleId => uint256 activePeriodsBitmap) internal _scheduleIdToActivePeriodsBitmap;
+
+    /**
      * @notice Current amount of tokens committed to vesting schedules
      * @dev Represents the sum of all unclaimed tokens across all active schedules.
      *      Increases when schedules are created, decreases when tokens are released or forfeited.
@@ -213,7 +221,7 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
      *
      * - The caller must have `VESTING_ADMIN_ROLE`
      * - `beneficiary` must not be the zero address
-     * - `periods` array must not be empty
+     * - `periods` array must not be empty and can have at most 256 elements
      *
      * Additional validations that may cause reverts:
      * - The contract must have sufficient token balance to cover the total schedule amount
@@ -237,8 +245,9 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         VestingPeriodParam[] calldata periods
     ) external virtual override onlyRole(VESTING_ADMIN_ROLE) returns (uint32 scheduleId) {
         // Validate inputs
+        uint256 periodsLength = periods.length;
         require(beneficiary != address(0), LibErrors.InvalidAddress());
-        require(periods.length > 0, LibErrors.InvalidArrayLength());
+        require(periodsLength > 0 && periodsLength <= 256, LibErrors.InvalidArrayLength(periodsLength));
 
         // Generate new schedule ID and initialize storage
         scheduleId = ++scheduleCounter;
@@ -250,7 +259,6 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
 
         // Validate periods and copy to storage in single loop
         uint256 totalAmount = 0;
-        uint256 periodsLength = periods.length;
         for (uint256 i = 0; i < periodsLength; ++i) {
             VestingPeriodParam calldata period = periods[i];
 
@@ -295,6 +303,8 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             // Store period and accumulate total amount
             newSchedule.periods.push(newPeriod);
             totalAmount += period.amount;
+            // Set period as active in bitmap for gas optimization
+            _scheduleIdToActivePeriodsBitmap[scheduleId] |= (1 << i);
         }
 
         // Check contract has sufficient uncommitted balance
@@ -377,11 +387,19 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
             if (schedule.isCancelled) {
                 continue;
             }
-            // Process each period in the schedule
+            uint256 periodBitmap = _scheduleIdToActivePeriodsBitmap[scheduleId];
+            // Skip if no active periods
+            if (periodBitmap == 0) {
+                continue;
+            }
             uint256 numPeriods = schedule.periods.length;
+            // Process schedule periods
             for (uint256 j = 0; j < numPeriods; ++j) {
-                uint256 claimableAmount = _claim(schedule, j);
-                totalClaimable += claimableAmount;
+                // Check if this specific period is active using bit position
+                if ((periodBitmap >> j) & 1 == 1) {
+                    uint256 claimableAmount = _claim(schedule, j);
+                    totalClaimable += claimableAmount;
+                }
             }
         }
 
@@ -422,11 +440,18 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
 
         uint256 totalClaimable = 0;
+        uint256 periodBitmap = _scheduleIdToActivePeriodsBitmap[uint32(scheduleId)];
+        // Validate there are active periods
+        require(periodBitmap > 0, IVestingVaultErrors.NoTokensToClaim());
+
         uint256 numPeriods = schedule.periods.length;
-        // Process each period in the schedule
+        // Process schedule periods
         for (uint256 i = 0; i < numPeriods; ++i) {
-            uint256 claimableAmount = _claim(schedule, i);
-            totalClaimable += claimableAmount;
+            // Check if this specific period is active using bit position
+            if ((periodBitmap >> i) & 1 == 1) {
+                uint256 claimableAmount = _claim(schedule, i);
+                totalClaimable += claimableAmount;
+            }
         }
 
         require(totalClaimable > 0, IVestingVaultErrors.NoTokensToClaim());
@@ -514,16 +539,23 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         for (uint256 i = 0; i < scheduleCount; ++i) {
             uint32 scheduleId = scheduleIds[i];
             Schedule storage schedule = _scheduleById[scheduleId];
-
             // Skip cancelled schedules
             if (schedule.isCancelled) {
                 continue;
             }
-            // Process each period in the schedule
+            uint256 periodBitmap = _scheduleIdToActivePeriodsBitmap[scheduleId];
+            // Skip if no active periods
+            if (periodBitmap == 0) {
+                continue;
+            }
             uint256 numPeriods = schedule.periods.length;
+            // Process schedule periods
             for (uint256 j = 0; j < numPeriods; ++j) {
-                uint256 releasableAmount = _claim(schedule, j);
-                totalReleasable += releasableAmount;
+                // Check if this specific period is active using bit position
+                if ((periodBitmap >> j) & 1 == 1) {
+                    uint256 releasableAmount = _claim(schedule, j);
+                    totalReleasable += releasableAmount;
+                }
             }
         }
 
@@ -563,12 +595,18 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         require(!schedule.isCancelled, IVestingVaultErrors.CancelledSchedule(scheduleId));
 
         uint256 totalReleasable = 0;
-        uint256 numPeriods = schedule.periods.length;
+        uint256 periodBitmap = _scheduleIdToActivePeriodsBitmap[uint32(scheduleId)];
+        // Validate there are active periods
+        require(periodBitmap > 0, IVestingVaultErrors.NoTokensToClaim());
 
-        // Process each period in the schedule
+        uint256 numPeriods = schedule.periods.length;
+        // Process schedule periods
         for (uint256 i = 0; i < numPeriods; ++i) {
-            uint256 releasableAmount = _claim(schedule, i);
-            totalReleasable += releasableAmount;
+            // Check if this specific period is active using bit position
+            if ((periodBitmap >> i) & 1 == 1) {
+                uint256 releasableAmount = _claim(schedule, i);
+                totalReleasable += releasableAmount;
+            }
         }
 
         require(totalReleasable > 0, IVestingVaultErrors.NoTokensToClaim());
@@ -951,6 +989,10 @@ contract VestingVault is Context, BoundedRoleMembership, SalvageCapable, IVestin
         // Update claimed amount
         if (claimableAmount > 0) {
             period.claimedAmount += claimableAmount;
+            // If period is now fully claimed, remove it from active bitmap for gas optimization
+            if (period.claimedAmount >= period.amount) {
+                _scheduleIdToActivePeriodsBitmap[schedule.id] &= ~(1 << periodIndex);
+            }
             // Emit event
             emit TokenRelease(_msgSender(), schedule.beneficiary, schedule.id, periodIndex, claimableAmount);
         }
