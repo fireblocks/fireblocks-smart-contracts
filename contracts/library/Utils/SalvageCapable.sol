@@ -118,7 +118,6 @@ abstract contract SalvageCapable is Context {
         token.safeTransferFrom(address(this), _msgSender(), tokenId);
     }
 
-
     /**
      * @notice This function is designed to be overridden in inheriting contracts.
      * @dev Override this function to implement Role-Based Access Control.

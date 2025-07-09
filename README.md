@@ -13,7 +13,7 @@ Welcome to the Fireblocks Smart Contracts repository. This repository is built u
   - [ERC1155F](#erc1155f)
   - [Allowlist](#allowlist)
   - [Denylist](#denylist)
-  - [VestingVault](#vestingvault) (⚠️ in audit process)
+  - [VestingVault](#vestingvault)
   - [UUPS Proxy](#uups-proxy)
   - [Trusted Forwarder](#trusted-forwarder)
 - [Gasless Variants](#gasless-variants)
@@ -84,11 +84,6 @@ A utility contract for managing access control via a denylist of restricted addr
 
 ### [VestingVault](./contracts/vaults/VestingVault.sol)
 
-> [!WARNING]
-> **Audit in Progress**
->
-> This contract is currently undergoing a security audit and is **not suitable for production use** until the audit is complete.
-
 A non-upgradeable contract for managing token vesting schedules with:
 
 - Multi-period vesting schedules with linear vesting and cliff options
@@ -150,11 +145,13 @@ npm install
 ```
 
 ### Compile
+
 ```bash
 npx hardhat compile
 ```
 
 ### Verify
+
 Verify, dont trust. Always make sure your deployed bytecode matches the bytecode in the [artifacts](./artifacts/) directory
 
 ## Audits
