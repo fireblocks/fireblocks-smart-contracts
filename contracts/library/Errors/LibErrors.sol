@@ -129,8 +129,8 @@ library LibErrors {
      */
     error NotFound(uint256 id);
 
-	/**
-	 * @dev Indicates that the account does not have a balance to operate on.
-	 */
-	error NoBalance();
+    /**
+     * @dev Indicates that the account does not have a balance to operate on.
+     */
+    error NoBalance();
 }
