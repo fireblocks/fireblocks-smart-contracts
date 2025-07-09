@@ -11,10 +11,10 @@
 		"@openzeppelin/contracts-v5": "npm:@openzeppelin/contracts@5.1.0",
 		"@types/node": "^20.0.0",
 		"ethers": "^6.4.0",
-		"ts-node": "^10.9.0",
-		"typescript": "^5.0.0",
 		"prettier": "^3.0.0",
-		"prettier-plugin-solidity": "^2.0.0"
+		"prettier-plugin-solidity": "^2.0.0",
+		"ts-node": "^10.9.0",
+		"typescript": "^5.0.0"
 	},
 	"scripts": {
 		"format": "prettier --plugin=prettier-plugin-solidity --write .",
