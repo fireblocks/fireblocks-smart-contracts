@@ -1,11 +1,11 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
+import { HardhatUserConfig } from 'hardhat/config';
+import '@nomicfoundation/hardhat-toolbox';
 
 const config: HardhatUserConfig = {
 	solidity: {
 		compilers: [
 			{
-				version: "0.8.20",
+				version: '0.8.20',
 				settings: {
 					optimizer: {
 						enabled: true,
@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
 				},
 			},
 			{
-				version: "0.8.22",
+				version: '0.8.22',
 				settings: {
 					optimizer: {
 						enabled: true,
@@ -22,10 +22,11 @@ const config: HardhatUserConfig = {
 					},
 				},
 			},
+
 			{
-				version: "0.8.29",
+				version: '0.8.29',
 				settings: {
-					evmVersion: "paris",
+					evmVersion: 'paris',
 					viaIR: true,
 				},
 			},
