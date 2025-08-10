@@ -77,8 +77,8 @@ abstract contract TokenUriUpgradeable is Initializable, ContextUpgradeable {
 	 * @param _uri A URI link pointing to the current URI associated with the token.
 	 */
 	function _tokenUriUpdate(uint256 _tokenId, string memory _uri) internal virtual {
-		emit TokenUriUpdated(_msgSender(), _tokenId, _tokenUri[_tokenId], _uri);
 		_tokenUri[_tokenId] = _uri;
+		emit TokenUriUpdated(_msgSender(), _tokenId, _tokenUri[_tokenId], _uri);
 	}
 
 	/**

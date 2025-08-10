@@ -76,8 +76,8 @@ abstract contract SalvageCapable is Context {
 	 */
 	function salvageERC20(IERC20 token, uint256 amount) external virtual {
 		_authorizeSalvageERC20(address(token), amount);
-		emit TokenSalvaged(_msgSender(), address(token), amount);
 		_withdrawERC20(token, _msgSender(), amount);
+		emit TokenSalvaged(_msgSender(), address(token), amount);
 	}
 
 	/**
@@ -95,11 +95,11 @@ abstract contract SalvageCapable is Context {
 			revert LibErrors.ZeroAmount();
 		}
 		_authorizeSalvageGas();
-		emit GasTokenSalvaged(_msgSender(), amount);
 		(bool succeed, ) = _msgSender().call{value: amount}("");
 		if (!succeed) {
 			revert LibErrors.SalvageGasFailed();
 		}
+		emit GasTokenSalvaged(_msgSender(), amount);
 	}
 
 	/**

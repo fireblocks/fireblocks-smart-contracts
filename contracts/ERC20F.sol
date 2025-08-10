@@ -258,8 +258,8 @@ contract ERC20F is
 		if (amount == 0) revert LibErrors.ZeroAmount();
 		if (address(accessRegistry) == address(0)) revert LibErrors.AccessRegistryNotSet();
 		if (accessRegistry.hasAccess(account, _msgSender(), _msgData())) revert LibErrors.RecoveryOnActiveAccount(account);
-		emit TokensRecovered(_msgSender(), account, amount);
 		_transfer(account, _msgSender(), amount);
+		emit TokensRecovered(_msgSender(), account, amount);
 	}
 
 	/**

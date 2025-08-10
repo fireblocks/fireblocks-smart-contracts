@@ -260,8 +260,8 @@ contract ERC721F is
 	function recoverTokens(address account, uint256 tokenId) external virtual onlyRole(RECOVERY_ROLE) {
 		if (address(accessRegistry) == address(0)) revert LibErrors.AccessRegistryNotSet();
 		if (accessRegistry.hasAccess(account, _msgSender(), _msgData())) revert LibErrors.RecoveryOnActiveAccount(account);
-		emit TokensRecovered(_msgSender(), account, tokenId);
 		_transfer(account, _msgSender(), tokenId);
+		emit TokensRecovered(_msgSender(), account, tokenId);
 	}
 
 	/**
