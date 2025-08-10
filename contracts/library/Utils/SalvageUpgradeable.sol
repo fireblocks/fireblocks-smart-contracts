@@ -77,8 +77,8 @@ abstract contract SalvageUpgradeable is Initializable, ContextUpgradeable {
 			revert LibErrors.ZeroAmount();
 		}
 		_authorizeSalvageERC20();
-		emit TokenSalvaged(_msgSender(), address(token), amount);
 		token.safeTransfer(_msgSender(), amount);
+		emit TokenSalvaged(_msgSender(), address(token), amount);
 	}
 
 	/**
@@ -96,11 +96,11 @@ abstract contract SalvageUpgradeable is Initializable, ContextUpgradeable {
 			revert LibErrors.ZeroAmount();
 		}
 		_authorizeSalvageGas();
-		emit GasTokenSalvaged(_msgSender(), amount);
 		(bool succeed, ) = _msgSender().call{value: amount}("");
 		if (!succeed) {
 			revert LibErrors.SalvageGasFailed();
 		}
+		emit GasTokenSalvaged(_msgSender(), amount);
 	}
 
 	/**

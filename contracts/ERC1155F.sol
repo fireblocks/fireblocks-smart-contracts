@@ -245,8 +245,8 @@ contract ERC1155F is
 	) external virtual onlyRole(RECOVERY_ROLE) {
 		if (address(accessRegistry) == address(0)) revert LibErrors.AccessRegistryNotSet();
 		if (accessRegistry.hasAccess(account, _msgSender(), _msgData())) revert LibErrors.RecoveryOnActiveAccount(account);
-		emit TokensRecovered(_msgSender(), account, tokenId, amount, data);
 		_safeTransferFrom(account, _msgSender(), tokenId, amount, data);
+		emit TokensRecovered(_msgSender(), account, tokenId, amount, data);
 	}
 
 	/**
