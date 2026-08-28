@@ -62,12 +62,14 @@ contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
 	 * - Can only be invoked once (controlled via the {initializer} modifier).
 	 * - Non-zero address `defaultAdmin`.
 	 * - Non-zero address `minter`.
+	 * - Non-zero address `burner`.
 	 * - Non-zero address `pauser`.
 	 *
 	 * @param _name The name of the token.
 	 * @param _symbol The symbol of the token.
 	 * @param defaultAdmin The account to be granted the "DEFAULT_ADMIN_ROLE".
 	 * @param minter The account to be granted the "MINTER_ROLE".
+	 * @param burner The account to be granted the "BURNER_ROLE".
 	 * @param pauser The account to be granted the "PAUSER_ROLE".
 	 * @param trustedForwarder The address of the trusted forwarder.
 	 */
@@ -76,10 +78,11 @@ contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
 		string calldata _symbol,
 		address defaultAdmin,
 		address minter,
+		address burner,
 		address pauser,
 		address trustedForwarder
 	) external virtual initializer {
-		if (defaultAdmin == address(0) || pauser == address(0) || minter == address(0)) {
+		if (defaultAdmin == address(0) || pauser == address(0) || minter == address(0) || burner == address(0)) {
 			revert LibErrors.InvalidAddress();
 		}
 		__ERC2771ContextInitializableUpgradeable_init(trustedForwarder);
@@ -95,6 +98,7 @@ contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
 
 		_grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
 		_grantRole(MINTER_ROLE, minter);
+		_grantRole(BURNER_ROLE, burner);
 		_grantRole(PAUSER_ROLE, pauser);
 	}
 
@@ -107,7 +111,14 @@ contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
 	 * @custom:deprecated This function is deprecated and should not be used. Please use the new {initialize} function
 	 * instead.
 	 */
-	function initialize(string calldata, string calldata, address, address, address) external pure virtual override {
+	function initialize(
+		string calldata,
+		string calldata,
+		address,
+		address,
+		address,
+		address
+	) external pure virtual override {
 		revert LibErrors.FunctionDisabled();
 	}
 
