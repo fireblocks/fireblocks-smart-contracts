@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC6093.sol)
-pragma solidity 0.8.20;
+pragma solidity 0.8.36;
 
 /**
  * @dev Standard ERC721 Errors
