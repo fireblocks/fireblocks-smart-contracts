@@ -8,7 +8,7 @@ Welcome to the Fireblocks Smart Contracts repository. This repository is built u
 
 - [Overview](#overview)
 - [Smart Contracts](#smart-contracts)
-  - [ERC20F](#erc20f)
+  - [ERC20F](#erc20f) (⚠️ in audit process)
   - [ERC721F](#erc721f)
   - [ERC1155F](#erc1155f)
   - [Allowlist](#allowlist)
@@ -43,6 +43,11 @@ Each contract uses the [UUPS proxy pattern](https://eips.ethereum.org/EIPS/eip-1
 ## Smart Contracts
 
 ### [ERC20F](./contracts/ERC20F.sol)
+
+> [!WARNING]
+> **Audit in Progress**
+>
+> This contract is currently undergoing a security audit and is **not suitable for production use** until the audit is complete. For the latest audited version, see [ERC20F.sol at commit `f6a65729a1d25f7aee0a93f2abc1b431dc38a139`](https://github.com/fireblocks/fireblocks-smart-contracts/blob/f6a65729a1d25f7aee0a93f2abc1b431dc38a139/contracts/ERC20F.sol).
 
 An upgradeable ERC-20 token template for:
 
@@ -111,13 +116,18 @@ An adapter for integrating ERC20 tokens with LayerZero, enabling cross-chain fun
 
 This repository also includes **gasless versions** via the following contracts:
 
-- [ERC20FGasless](./contracts/gasless-contracts/ERC20FGasless.sol)
+- [ERC20FGasless](./contracts/gasless-contracts/ERC20FGasless.sol) (⚠️ in audit process)
 - [ERC721FGasless](./contracts/gasless-contracts/ERC721FGasless.sol)
 - [ERC1155FGasless](./contracts/gasless-contracts/ERC1155FGasless.sol)
 - [AllowlistGasless](./contracts/gasless-contracts/AccessRegistry/AllowListGasless.sol)
 - [DenylistGasless](./contracts/gasless-contracts/AccessRegistry/DenyListGasless.sol)
 
 These variants use the ERC2771 standard and allow users to perform transactions without requiring them to pay gas fees, enhancing usability and accessibility.
+
+> [!WARNING]
+> **Audit in Progress: ERC20FGasless**
+>
+> [ERC20FGasless](./contracts/gasless-contracts/ERC20FGasless.sol) is currently undergoing a security audit and is **not suitable for production use** until the audit is complete. For the latest audited version, see [ERC20FGasless.sol at commit `f6a65729a1d25f7aee0a93f2abc1b431dc38a139`](https://github.com/fireblocks/fireblocks-smart-contracts/blob/f6a65729a1d25f7aee0a93f2abc1b431dc38a139/contracts/gasless-contracts/ERC20FGasless.sol).
 
 ---
 
