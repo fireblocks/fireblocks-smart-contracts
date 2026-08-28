@@ -64,9 +64,11 @@ contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
 	 * - Non-zero address `minter`.
 	 * - Non-zero address `burner`.
 	 * - Non-zero address `pauser`.
+	 * - `decimals_` is not greater than {MAX_DECIMALS}.
 	 *
 	 * @param _name The name of the token.
 	 * @param _symbol The symbol of the token.
+	 * @param decimals_ The number of decimals used to get the user representation of the token.
 	 * @param defaultAdmin The account to be granted the "DEFAULT_ADMIN_ROLE".
 	 * @param minter The account to be granted the "MINTER_ROLE".
 	 * @param burner The account to be granted the "BURNER_ROLE".
@@ -76,6 +78,7 @@ contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
 	function initialize(
 		string calldata _name,
 		string calldata _symbol,
+		uint8 decimals_,
 		address defaultAdmin,
 		address minter,
 		address burner,
@@ -85,6 +88,12 @@ contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
 		if (defaultAdmin == address(0) || pauser == address(0) || minter == address(0) || burner == address(0)) {
 			revert LibErrors.InvalidAddress();
 		}
+		if (decimals_ > MAX_DECIMALS) {
+			revert LibErrors.InvalidDecimals();
+		}
+
+		_setDecimals(decimals_);
+
 		__ERC2771ContextInitializableUpgradeable_init(trustedForwarder);
 		__UUPSUpgradeable_init();
 		__ERC20_init(_name, _symbol);
@@ -114,6 +123,7 @@ contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
 	function initialize(
 		string calldata,
 		string calldata,
+		uint8,
 		address,
 		address,
 		address,
