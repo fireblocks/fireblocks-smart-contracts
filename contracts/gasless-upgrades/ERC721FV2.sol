@@ -148,4 +148,20 @@ contract ERC721FV2 is ERC721F, ERC2771ContextInitializableUpgradeable {
 	{
 		return ERC2771ContextUpgradeable._msgData();
 	}
+
+	/**
+	 * @notice This function returns the byte length of the {ERC2771} context suffix appended to `msg.data`.
+	 * @dev Override required because both {ContextUpgradeable} and {ERC2771ContextUpgradeable} define this
+	 * function (OpenZeppelin 4.9.6+). It defers to the {ERC2771ContextUpgradeable} implementation.
+	 * @return The length in bytes of the context suffix.
+	 */
+	function _contextSuffixLength()
+		internal
+		view
+		virtual
+		override(ContextUpgradeable, ERC2771ContextUpgradeable)
+		returns (uint256)
+	{
+		return ERC2771ContextUpgradeable._contextSuffixLength();
+	}
 }
