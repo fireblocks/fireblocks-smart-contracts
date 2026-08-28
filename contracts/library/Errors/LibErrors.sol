@@ -34,6 +34,11 @@ library LibErrors {
     error InvalidAddress();
 
     /**
+     * @dev Indicates a failure that the number of decimals is not valid.
+     */
+    error InvalidDecimals();
+
+    /**
      * @dev Indicates that the array length is invalid.
      * @param invalidLength The length of the given array, which is not allowed.
      */

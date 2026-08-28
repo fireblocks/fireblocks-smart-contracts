@@ -129,6 +129,38 @@ contract ERC20F is
 	 */
 	bytes32 public constant SALVAGE_ROLE = keccak256("SALVAGE_ROLE");
 
+	/**
+	 * @notice The maximum number of decimals a token may be configured with.
+	 *
+	 * @dev {ERC20F} tokens may be configured with anywhere from 0 up to and including 18 decimals. The bound
+	 * mirrors the {ERC20Upgradeable} default of 18.
+	 */
+	uint8 internal constant MAX_DECIMALS = 18;
+
+	/// Storage
+
+	/**
+	 * @custom:storage-location erc7201:fireblocks.tokenization.ERC20F
+	 * @notice ERC-7201 namespaced storage for {ERC20F}.
+	 *
+	 * @dev Namespaced storage (rather than a sequentially appended state variable) keeps the configurable
+	 * decimals value from shifting the storage layout of contracts that inherit {ERC20F} and linearize
+	 * additional parents after it, for example {ERC20FGasless} and its {ERC2771ContextInitializableUpgradeable}
+	 * mixin. New foundational fields must be appended to this struct and never reordered.
+	 *
+	 * @param decimalsPlusOne The configured decimals stored offset by one, so that an uninitialized slot (zero)
+	 * is distinguishable from a deliberately configured value of zero decimals.
+	 */
+	struct ERC20FStorage {
+		uint8 decimalsPlusOne;
+	}
+
+	/**
+	 * @dev Storage slot of {ERC20FStorage}, derived per ERC-7201 as
+	 * `keccak256(abi.encode(uint256(keccak256("fireblocks.tokenization.ERC20F")) - 1)) & ~bytes32(uint256(0xff))`.
+	 */
+	bytes32 private constant ERC20F_STORAGE_LOCATION = 0x41e1027dfbd2ffba57bbb420c57896cfd0bb0add82be6bbf9f28a14504f54700;
+
 	/// Events
 
 	/**
@@ -163,9 +195,11 @@ contract ERC20F is
 	 * - Non-zero address `minter`.
 	 * - Non-zero address `burner`.
 	 * - Non-zero address `pauser`.
+	 * - `decimals_` is not greater than {MAX_DECIMALS}.
 	 *
 	 * @param _name The name of the token.
 	 * @param _symbol The symbol of the token.
+	 * @param decimals_ The number of decimals used to get the user representation of the token.
 	 * @param defaultAdmin The account to be granted the "DEFAULT_ADMIN_ROLE".
 	 * @param minter The account to be granted the "MINTER_ROLE".
 	 * @param burner The account to be granted the "BURNER_ROLE".
@@ -174,6 +208,7 @@ contract ERC20F is
 	function initialize(
 		string calldata _name,
 		string calldata _symbol,
+		uint8 decimals_,
 		address defaultAdmin,
 		address minter,
 		address burner,
@@ -182,6 +217,11 @@ contract ERC20F is
 		if (defaultAdmin == address(0) || pauser == address(0) || minter == address(0) || burner == address(0)) {
 			revert LibErrors.InvalidAddress();
 		}
+		if (decimals_ > MAX_DECIMALS) {
+			revert LibErrors.InvalidDecimals();
+		}
+
+		_setDecimals(decimals_);
 
 		__UUPSUpgradeable_init();
 		__ERC20_init(_name, _symbol);
@@ -578,6 +618,51 @@ contract ERC20F is
 					revert ERC20InvalidReceiver(account);
 				}
 			}
+		}
+	}
+
+	/**
+	 * @notice This function returns the number of decimals used to get the user representation of the token.
+	 *
+	 * @dev Overrides {ERC20Upgradeable.decimals} to return the value configured at {initialize} rather than the
+	 * fixed default of 18. Reverts with {LibErrors.InvalidDecimals} when the value has never been set, which
+	 * cannot occur for a token deployed through {initialize}.
+	 *
+	 * @return The configured number of decimals.
+	 */
+	function decimals() public view virtual override returns (uint8) {
+		uint8 decimalsPlusOne = _getERC20FStorage().decimalsPlusOne;
+		if (decimalsPlusOne == 0) {
+			revert LibErrors.InvalidDecimals();
+		}
+		return decimalsPlusOne - 1;
+	}
+
+	/**
+	 * @notice This function sets the number of decimals used to get the user representation of the token.
+	 *
+	 * @dev Writes the value offset by one into namespaced storage so that a configured value of zero remains
+	 * distinguishable from an unset slot. This is the single writer of the decimals value; there is no public
+	 * setter, so the value is immutable after {initialize}.
+	 *
+	 * @param decimals_ The number of decimals to configure.
+	 */
+	function _setDecimals(uint8 decimals_) internal virtual {
+		_getERC20FStorage().decimalsPlusOne = decimals_ + 1;
+	}
+
+	/**
+	 * @notice This function returns a pointer to the {ERC20FStorage} namespaced storage struct.
+	 *
+	 * @dev Resolves the ERC-7201 storage location so the struct does not participate in the sequential storage
+	 * layout shared with inheriting contracts.
+	 *
+	 * @return $ A storage pointer to the {ERC20FStorage} struct.
+	 */
+	function _getERC20FStorage() private pure returns (ERC20FStorage storage $) {
+		/* solhint-disable-next-line no-inline-assembly */
+		assembly {
+			$.slot := ERC20F_STORAGE_LOCATION
 		}
 	}
 }
