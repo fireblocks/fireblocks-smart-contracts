@@ -15,25 +15,25 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.8.36;
 
-import { ERC1967Proxy } from "@openzeppelin/contracts-v5/proxy/ERC1967/ERC1967Proxy.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts-v5/proxy/ERC1967/ERC1967Proxy.sol";
 
 /**
  * @title Proxy
  * @author Fireblocks
  * @notice A proxy contract that delegates all calls to an implementation (logic) contract.
- * 
+ *
  * @dev Inherits from the ERC1967Proxy contract, which follows the EIP-1967 standard for upgradeable contracts.
  * This contract sets up the initial implementation and optionally executes an initialization call.
- * 
+ *
  * @custom:security-contact support@fireblocks.com
  */
 contract Proxy is ERC1967Proxy {
-	/// Functions
+    /// Functions
 
-	/**
-	 * @notice This function acts as the constructor of the contract.
-	 * @param _logic The address of the logic contract.
-	 * @param _data The data to be used in the delegate call.
-	 */
-	constructor(address _logic, bytes memory _data) ERC1967Proxy(_logic, _data) payable {}
+    /**
+     * @notice This function acts as the constructor of the contract.
+     * @param _logic The address of the logic contract.
+     * @param _data The data to be used in the delegate call.
+     */
+    constructor(address _logic, bytes memory _data) payable ERC1967Proxy(_logic, _data) {}
 }

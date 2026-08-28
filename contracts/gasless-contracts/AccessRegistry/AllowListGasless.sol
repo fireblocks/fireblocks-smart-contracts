@@ -37,57 +37,57 @@ import {AccessListUpgradeableGasless} from "./AccessListUpgradeableGasless.sol";
  * - ACCESS_LIST_ADMIN_ROLE (via {AccessListUpgradeable})
  */
 contract AllowListGasless is AccessListUpgradeableGasless {
-	using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-	/// Functions
+    /// Functions
 
-	/**
-	 * @notice This function acts as the constructor of the contract.
-	 * @dev This function disables the initializers.
-	 */
-	/// @custom:oz-upgrades-unsafe-allow constructor
-	constructor() {
-		_disableInitializers();
-	}
+    /**
+     * @notice This function acts as the constructor of the contract.
+     * @dev This function disables the initializers.
+     */
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
-	/**
-	 * @notice This function configures the Allow List contract with the initial state and granting
-	 * privileged roles.
-	 *
-	 * @dev This function uses the {AccessListUpgradeable.__AccessList_init} function to grant roles.
-	 *
-	 * Calling Conditions:
-	 *
-	 * - Can only be invoked once (controlled via the {initializer} modifier).
-	 * - Non-zero address `defaultAdmin` (checked internally by {AccessListUpgradeable.__AccessList_init}).
-	 * - Non-zero address `pauser` (checked internally by {AccessListUpgradeable.__AccessList_init}).
-	 * - Non-zero address `upgrader`(checked internally by {AccessListUpgradeable.__AccessList_init}).
-	 *
-	 * @param defaultAdmin The account to be granted the "DEFAULT_ADMIN_ROLE".
-	 * @param pauser The account to be granted the "PAUSER_ROLE".
-	 * @param upgrader The account to be granted the "UPGRADER_ROLE".
-	 * @param trustedForwarder The address of the trusted forwarder.
-	 */
-	function initialize(
-		address defaultAdmin,
-		address pauser,
-		address upgrader,
-		address trustedForwarder
-	) external virtual initializer {
-		__AccessList_init(defaultAdmin, pauser, upgrader, trustedForwarder);
-	}
+    /**
+     * @notice This function configures the Allow List contract with the initial state and granting
+     * privileged roles.
+     *
+     * @dev This function uses the {AccessListUpgradeable.__AccessList_init} function to grant roles.
+     *
+     * Calling Conditions:
+     *
+     * - Can only be invoked once (controlled via the {initializer} modifier).
+     * - Non-zero address `defaultAdmin` (checked internally by {AccessListUpgradeable.__AccessList_init}).
+     * - Non-zero address `pauser` (checked internally by {AccessListUpgradeable.__AccessList_init}).
+     * - Non-zero address `upgrader`(checked internally by {AccessListUpgradeable.__AccessList_init}).
+     *
+     * @param defaultAdmin The account to be granted the "DEFAULT_ADMIN_ROLE".
+     * @param pauser The account to be granted the "PAUSER_ROLE".
+     * @param upgrader The account to be granted the "UPGRADER_ROLE".
+     * @param trustedForwarder The address of the trusted forwarder.
+     */
+    function initialize(
+        address defaultAdmin,
+        address pauser,
+        address upgrader,
+        address trustedForwarder
+    ) external virtual initializer {
+        __AccessList_init(defaultAdmin, pauser, upgrader, trustedForwarder);
+    }
 
-	/**
-	 * @notice This function checks if an address is present in the Access list. By doing so, it confirms that the address
-	 * is allowed to participate in the system.
-	 * @dev This function returns `true` if the address is present in the Access list, otherwise it returns `false`.
-	 * The parameter `data` is ignored in this implementation of the interface as it serves as a placeholder for
-	 * future implementations.
-	 *
-	 * @param account The address to be checked.
-	 * @return `true` if the address is present in the Access list, otherwise it returns `false`.
-	 */
-	function hasAccess(address account, address, bytes calldata) external view virtual override returns (bool) {
-		return _accessList.contains(account);
-	}
+    /**
+     * @notice This function checks if an address is present in the Access list. By doing so, it confirms that the address
+     * is allowed to participate in the system.
+     * @dev This function returns `true` if the address is present in the Access list, otherwise it returns `false`.
+     * The parameter `data` is ignored in this implementation of the interface as it serves as a placeholder for
+     * future implementations.
+     *
+     * @param account The address to be checked.
+     * @return `true` if the address is present in the Access list, otherwise it returns `false`.
+     */
+    function hasAccess(address account, address, bytes calldata) external view virtual override returns (bool) {
+        return _accessList.contains(account);
+    }
 }

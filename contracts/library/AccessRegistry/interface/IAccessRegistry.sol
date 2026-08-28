@@ -23,12 +23,12 @@ pragma solidity 0.8.36;
  * @dev Interface for the Access Registry features.
  */
 interface IAccessRegistry {
-	/**
-	 * @notice This function is used to check if the account has necessary permissions to access the system.
-	 * @param account The account to be checked.
-	 * @param caller The account calling the function requiring an access check.
-	 * @param data The data associated with the function call
-	 * @return true if the account is allowed to access the system (false otherwise).
-	 */
-	function hasAccess(address account, address caller, bytes calldata data) external view returns (bool);
+    /**
+     * @notice This function is used to check if the account has necessary permissions to access the system.
+     * @param account The account to be checked.
+     * @param caller The account calling the function requiring an access check.
+     * @param data The data associated with the function call
+     * @return true if the account is allowed to access the system (false otherwise).
+     */
+    function hasAccess(address account, address caller, bytes calldata data) external view returns (bool);
 }

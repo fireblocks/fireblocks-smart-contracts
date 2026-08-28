@@ -25,16 +25,16 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @custom:security-contact support@fireblocks.com
  */
 interface IERC20MintableBurnable is IERC20 {
-	/**
-	 * @notice Mints new tokens to the specified address.
-	 * @param to The address to receive the newly minted tokens.
-	 * @param amount The amount of tokens to mint.
-	 */
-	function mint(address to, uint256 amount) external;
+    /**
+     * @notice Mints new tokens to the specified address.
+     * @param to The address to receive the newly minted tokens.
+     * @param amount The amount of tokens to mint.
+     */
+    function mint(address to, uint256 amount) external;
 
-	/**
-	 * @notice Burns tokens from the specified address.
-	 * @param amount The amount of tokens to burn.
-	 */
-	function burn(uint256 amount) external;
+    /**
+     * @notice Burns tokens from the specified address.
+     * @param amount The amount of tokens to burn.
+     */
+    function burn(uint256 amount) external;
 }

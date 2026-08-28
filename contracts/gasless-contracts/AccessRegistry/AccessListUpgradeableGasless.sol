@@ -43,111 +43,111 @@ import {LibErrors} from "../../library/Errors/LibErrors.sol";
  * - ACCESS_LIST_ADMIN_ROLE
  */
 abstract contract AccessListUpgradeableGasless is AccessListUpgradeable, ERC2771ContextInitializableUpgradeable {
-	/// Functions
+    /// Functions
 
-	/**
-	 * @notice Assigns Admin roles for the AccessList, initializes the contract and its inherited base contracts.
-	 *
-	 * @dev  Calling Conditions:
-	 *
-	 * - Can only be invoked by functions with the {initializer} or {reinitializer} modifiers.
-	 * - Non-zero address `defaultAdmin`.
-	 * - Non-zero address `pauser`.
-	 * - Non-zero address `upgrader`.
-	 *
-	 * @param defaultAdmin The account to be granted the "DEFAULT_ADMIN_ROLE".
-	 * @param pauser The account to be granted the "PAUSER_ROLE".
-	 * @param upgrader Account to be granted the "UPGRADER_ROLE".
-	 * @param trustedForwarder The address of the trusted forwarder.
-	 */
-	/* solhint-disable func-name-mixedcase */
-	function __AccessList_init(
-		address defaultAdmin,
-		address pauser,
-		address upgrader,
-		address trustedForwarder
-	) internal virtual onlyInitializing {
-		__AccessList_init(defaultAdmin, pauser, upgrader);
-		__ERC2771ContextInitializableUpgradeable_init(trustedForwarder);
-	}
+    /**
+     * @notice Assigns Admin roles for the AccessList, initializes the contract and its inherited base contracts.
+     *
+     * @dev  Calling Conditions:
+     *
+     * - Can only be invoked by functions with the {initializer} or {reinitializer} modifiers.
+     * - Non-zero address `defaultAdmin`.
+     * - Non-zero address `pauser`.
+     * - Non-zero address `upgrader`.
+     *
+     * @param defaultAdmin The account to be granted the "DEFAULT_ADMIN_ROLE".
+     * @param pauser The account to be granted the "PAUSER_ROLE".
+     * @param upgrader Account to be granted the "UPGRADER_ROLE".
+     * @param trustedForwarder The address of the trusted forwarder.
+     */
+    /* solhint-disable func-name-mixedcase */
+    function __AccessList_init(
+        address defaultAdmin,
+        address pauser,
+        address upgrader,
+        address trustedForwarder
+    ) internal virtual onlyInitializing {
+        __AccessList_init(defaultAdmin, pauser, upgrader);
+        __ERC2771ContextInitializableUpgradeable_init(trustedForwarder);
+    }
 
-	/**
-	 * @notice The multicall function has been intentionally disabled to prevent use with gasless operations.
-	 *
-	 * @dev OpenZeppelin library needs to be upgraded to V4.9.5 or higher if you consider using multicall along with
-	 * gasless feature.
-	 * @custom:deprecated This function is deprecated and should not be used.
-	 */
-	function multicall(bytes[] calldata) external virtual override returns (bytes[] memory) {
-		revert LibErrors.FunctionDisabled();
-	}
+    /**
+     * @notice The multicall function has been intentionally disabled to prevent use with gasless operations.
+     *
+     * @dev OpenZeppelin library needs to be upgraded to V4.9.5 or higher if you consider using multicall along with
+     * gasless feature.
+     * @custom:deprecated This function is deprecated and should not be used.
+     */
+    function multicall(bytes[] calldata) external virtual override returns (bytes[] memory) {
+        revert LibErrors.FunctionDisabled();
+    }
 
-	/**
-	 * @notice This is a function that applies any validations required to update the trusted forwarder.
-	 *
-	 * @dev Reverts when the caller does not have the "CONTRACT_ADMIN_ROLE".
-	 *
-	 * Calling Conditions:
-	 *
-	 * - Only the "CONTRACT_ADMIN_ROLE" can execute.
-	 * - {AccessListUpgradeable} is not paused.
-	 */
-	function _authorizeTrustedForwarderUpdate() internal virtual override whenNotPaused onlyRole(CONTRACT_ADMIN_ROLE) {}
+    /**
+     * @notice This is a function that applies any validations required to update the trusted forwarder.
+     *
+     * @dev Reverts when the caller does not have the "CONTRACT_ADMIN_ROLE".
+     *
+     * Calling Conditions:
+     *
+     * - Only the "CONTRACT_ADMIN_ROLE" can execute.
+     * - {AccessListUpgradeable} is not paused.
+     */
+    function _authorizeTrustedForwarderUpdate() internal virtual override whenNotPaused onlyRole(CONTRACT_ADMIN_ROLE) {}
 
-	/**
-	 * @notice This function is used to retrieve the sender of the transaction.
-	 * @dev This function is an override of the logic provided by {ContextUpgradeable} function. Instead it uses the
-	 * {ERC2771ContextUpgradeable}.{_msgSender} function to retrieve the sender.
-	 * @return The address of the sender.
-	 */
-	function _msgSender()
-		internal
-		view
-		virtual
-		override(ContextUpgradeable, ERC2771ContextUpgradeable)
-		returns (address)
-	{
-		return ERC2771ContextUpgradeable._msgSender();
-	}
+    /**
+     * @notice This function is used to retrieve the sender of the transaction.
+     * @dev This function is an override of the logic provided by {ContextUpgradeable} function. Instead it uses the
+     * {ERC2771ContextUpgradeable}.{_msgSender} function to retrieve the sender.
+     * @return The address of the sender.
+     */
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (address)
+    {
+        return ERC2771ContextUpgradeable._msgSender();
+    }
 
-	/**
-	 * @notice This function is used to retrieve the data of the transaction.
-	 * @dev This function is an override of the logic provided by {ContextUpgradeable} function. Instead it uses the
-	 * {ERC2771ContextUpgradeable}.{_msgData} function to retrieve the data.
-	 * @return The data of the transaction.
-	 */
-	function _msgData()
-		internal
-		view
-		virtual
-		override(ContextUpgradeable, ERC2771ContextUpgradeable)
-		returns (bytes calldata)
-	{
-		return ERC2771ContextUpgradeable._msgData();
-	}
+    /**
+     * @notice This function is used to retrieve the data of the transaction.
+     * @dev This function is an override of the logic provided by {ContextUpgradeable} function. Instead it uses the
+     * {ERC2771ContextUpgradeable}.{_msgData} function to retrieve the data.
+     * @return The data of the transaction.
+     */
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        return ERC2771ContextUpgradeable._msgData();
+    }
 
-	/**
-	 * @notice This function returns the byte length of the {ERC2771} context suffix appended to `msg.data`.
-	 * @dev Override required because both {ContextUpgradeable} and {ERC2771ContextUpgradeable} define this
-	 * function (OpenZeppelin 4.9.6+). It defers to the {ERC2771ContextUpgradeable} implementation.
-	 * @return The length in bytes of the context suffix.
-	 */
-	function _contextSuffixLength()
-		internal
-		view
-		virtual
-		override(ContextUpgradeable, ERC2771ContextUpgradeable)
-		returns (uint256)
-	{
-		return ERC2771ContextUpgradeable._contextSuffixLength();
-	}
+    /**
+     * @notice This function returns the byte length of the {ERC2771} context suffix appended to `msg.data`.
+     * @dev Override required because both {ContextUpgradeable} and {ERC2771ContextUpgradeable} define this
+     * function (OpenZeppelin 4.9.6+). It defers to the {ERC2771ContextUpgradeable} implementation.
+     * @return The length in bytes of the context suffix.
+     */
+    function _contextSuffixLength()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (uint256)
+    {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
 
-	/* solhint-enable func-name-mixedcase */
-	/**
-	 * @dev This empty reserved space is put in place to allow future versions to add new
-	 * variables without shifting down storage in the inheritance chain.
-	 * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-	 */
-	//slither-disable-next-line naming-convention
-	uint256[50] private __gap;
+    /* solhint-enable func-name-mixedcase */
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    //slither-disable-next-line naming-convention
+    uint256[50] private __gap;
 }

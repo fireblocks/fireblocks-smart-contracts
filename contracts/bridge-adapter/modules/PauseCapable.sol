@@ -29,45 +29,45 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
  * @custom:security-contact support@fireblocks.com
  */
 abstract contract PauseCapable is Pausable {
-	/// Functions
+    /// Functions
 
-	/**
-	 * @dev Initializes the contract in an unpaused state.
-	 * Inherits from OpenZeppelin's Pausable contract.
-	 */
-	constructor() Pausable() {}
+    /**
+     * @dev Initializes the contract in an unpaused state.
+     * Inherits from OpenZeppelin's Pausable contract.
+     */
+    constructor() Pausable() {}
 
-	/**
-	 * @notice This is a function used to pause the contract.
-	 *
-	 * @dev Calling Conditions:
-	 *
-	 * - Contract is not paused. (checked internally by {Pausable._pause})
-	 *
-	 * This function emits a {Paused} event as part of {Pausable._pause}.
-	 */
-	function pause() external virtual {
-		_authorizePause();
-		_pause();
-	}
+    /**
+     * @notice This is a function used to pause the contract.
+     *
+     * @dev Calling Conditions:
+     *
+     * - Contract is not paused. (checked internally by {Pausable._pause})
+     *
+     * This function emits a {Paused} event as part of {Pausable._pause}.
+     */
+    function pause() external virtual {
+        _authorizePause();
+        _pause();
+    }
 
-	/**
-	 * @notice This is a function used to unpause the contract.
-	 *
-	 * @dev Calling Conditions:
-	 *
-	 * - Contract is paused. (checked internally by {Pausable._unpause})
-	 *
-	 * This function emits an {Unpaused} event as part of {Pausable._unpause}.
-	 */
-	function unpause() external virtual {
-		_authorizePause();
-		_unpause();
-	}
+    /**
+     * @notice This is a function used to unpause the contract.
+     *
+     * @dev Calling Conditions:
+     *
+     * - Contract is paused. (checked internally by {Pausable._unpause})
+     *
+     * This function emits an {Unpaused} event as part of {Pausable._unpause}.
+     */
+    function unpause() external virtual {
+        _authorizePause();
+        _unpause();
+    }
 
-	/**
-	 * @notice This function is designed to be overridden in inheriting contracts.
-	 * @dev Override this function to implement RBAC control.
-	 */
-	function _authorizePause() internal virtual;
+    /**
+     * @notice This function is designed to be overridden in inheriting contracts.
+     * @dev Override this function to implement RBAC control.
+     */
+    function _authorizePause() internal virtual;
 }

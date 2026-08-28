@@ -34,41 +34,41 @@ import {LibErrors} from "../../library/Errors/LibErrors.sol";
  * @custom:security-contact support@fireblocks.com
  */
 abstract contract RoleBasedOwnable is AccessControl, Ownable {
-	/// Functions
+    /// Functions
 
-	/**
-	 * @notice The constructor of the RoleBasedOwnable contract.
-	 * @dev This constructor sets the contract as the owner and renounces ownership to prevent any address from being
-	 * set as the owner.
-	 */
-	constructor() Ownable(address(this)) {
-		// Since we cannot omit Ownable constructor invocation, in order to avoid
-		// the owner being set an address, we pass the contract address and now
-		// we renounce ownership.
-		_transferOwnership(address(0));
-	}
+    /**
+     * @notice The constructor of the RoleBasedOwnable contract.
+     * @dev This constructor sets the contract as the owner and renounces ownership to prevent any address from being
+     * set as the owner.
+     */
+    constructor() Ownable(address(this)) {
+        // Since we cannot omit Ownable constructor invocation, in order to avoid
+        // the owner being set an address, we pass the contract address and now
+        // we renounce ownership.
+        _transferOwnership(address(0));
+    }
 
-	/**
-	 * @notice This function revokes an Access Control role from an account
-	 * @dev Calling Conditions:
-	 *
-	 * - Caller must be the role admin of the `role`.
-	 * - Non-zero address `account`.
-	 *
-	 * This function emits a {RoleRevoked} event as part of {AccessControl}.{_revokeRole}.
-	 *
-	 * @param role The role that will be revoked.
-	 * @param account The address from which role is revoked
-	 */
-	function revokeRole(bytes32 role, address account) public virtual override {
-		if (role == DEFAULT_ADMIN_ROLE && account == _msgSender()) {
-			revert LibErrors.DefaultAdminError();
-		}
-		_authorizeRoleManagement();
-		AccessControl.revokeRole(role, account);
-	}
+    /**
+     * @notice This function revokes an Access Control role from an account
+     * @dev Calling Conditions:
+     *
+     * - Caller must be the role admin of the `role`.
+     * - Non-zero address `account`.
+     *
+     * This function emits a {RoleRevoked} event as part of {AccessControl}.{_revokeRole}.
+     *
+     * @param role The role that will be revoked.
+     * @param account The address from which role is revoked
+     */
+    function revokeRole(bytes32 role, address account) public virtual override {
+        if (role == DEFAULT_ADMIN_ROLE && account == _msgSender()) {
+            revert LibErrors.DefaultAdminError();
+        }
+        _authorizeRoleManagement();
+        AccessControl.revokeRole(role, account);
+    }
 
-	/**
+    /**
 	 * @notice  This function renounces an Access Control role from an account, except for the "DEFAULT_ADMIN_ROLE".
 	 *
 	 * @dev Only the account itself can renounce its own roles, and not any other account.
@@ -82,43 +82,43 @@ abstract contract RoleBasedOwnable is AccessControl, Ownable {
 	 * @param role The role that will be renounced.
 	 * @param account The address from which role is renounced
 	 */
-	function renounceRole(bytes32 role, address account) public virtual override {
-		if (role == DEFAULT_ADMIN_ROLE) {
-			revert LibErrors.DefaultAdminError();
-		}
-		_authorizeRoleManagement();
-		AccessControl.renounceRole(role, account);
-	}
+    function renounceRole(bytes32 role, address account) public virtual override {
+        if (role == DEFAULT_ADMIN_ROLE) {
+            revert LibErrors.DefaultAdminError();
+        }
+        _authorizeRoleManagement();
+        AccessControl.renounceRole(role, account);
+    }
 
-	/**
-	 * @notice This function grants an Access Control role to an account
-	 * @dev Calling Conditions:
-	 *
-	 * - Caller must be the role admin of the `role`.
-	 * - Non-zero address `account`.
-	 *
-	 * This function emits a {RoleGranted} event as part of {AccessControl}.{_grantRole}.
-	 *
-	 * @param role The role that will be granted.
-	 * @param account The address to which role is granted
-	 */
-	function grantRole(bytes32 role, address account) public virtual override {
-		_authorizeRoleManagement();
-		AccessControl.grantRole(role, account);
-	}
+    /**
+     * @notice This function grants an Access Control role to an account
+     * @dev Calling Conditions:
+     *
+     * - Caller must be the role admin of the `role`.
+     * - Non-zero address `account`.
+     *
+     * This function emits a {RoleGranted} event as part of {AccessControl}.{_grantRole}.
+     *
+     * @param role The role that will be granted.
+     * @param account The address to which role is granted
+     */
+    function grantRole(bytes32 role, address account) public virtual override {
+        _authorizeRoleManagement();
+        AccessControl.grantRole(role, account);
+    }
 
-	/**
-	 * @notice This function is designed to be overridden in inheriting contracts.
-	 * @dev Override this function to implement RBAC control or other validations related to role management.
-	 */
-	function _authorizeRoleManagement() internal virtual;
+    /**
+     * @notice This function is designed to be overridden in inheriting contracts.
+     * @dev Override this function to implement RBAC control or other validations related to role management.
+     */
+    function _authorizeRoleManagement() internal virtual;
 
-	/**
-	 * @notice This function is designed to be overridden in inheriting contracts.
-	 * @dev Override this function to implement RBAC control.
-	 * It should throw if the sender does not have a specified role (e.g. CONTRACT_ADMIN_ROLE)
-	 */
-	function _checkOwner() internal view virtual override {
-		revert();
-	}
+    /**
+     * @notice This function is designed to be overridden in inheriting contracts.
+     * @dev Override this function to implement RBAC control.
+     * It should throw if the sender does not have a specified role (e.g. CONTRACT_ADMIN_ROLE)
+     */
+    function _checkOwner() internal view virtual override {
+        revert();
+    }
 }
