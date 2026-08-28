@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 pragma solidity 0.8.36;
 
-import { ERC2771Forwarder } from "@openzeppelin/contracts-v5/metatx/ERC2771Forwarder.sol";
+import {ERC2771Forwarder} from "@openzeppelin/contracts-v5/metatx/ERC2771Forwarder.sol";
 
 /**
  * @title Trusted Forwarder
@@ -24,11 +24,11 @@ import { ERC2771Forwarder } from "@openzeppelin/contracts-v5/metatx/ERC2771Forwa
  * enable gasless transactions. This contract is based on the OpenZeppelin ERC2771Forwarder contract.
  */
 contract TrustedForwarder is ERC2771Forwarder {
-	/// functions
+    /// functions
 
-	/**
-	 * @notice This function acts as the constructor of the contract.
-	 * @param name The name of the contract.
-	 */
-	constructor(string memory name) ERC2771Forwarder(name) {}
+    /**
+     * @notice This function acts as the constructor of the contract.
+     * @param name The name of the contract.
+     */
+    constructor(string memory name) ERC2771Forwarder(name) {}
 }

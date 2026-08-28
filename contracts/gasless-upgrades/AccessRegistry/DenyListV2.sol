@@ -53,108 +53,108 @@ import {ERC2771ContextInitializableUpgradeable} from "../../library/MetaTx/ERC27
  * @custom:version 2.0.0
  */
 contract DenyListV2 is DenyList, ERC2771ContextInitializableUpgradeable {
-	/// modifiers
+    /// modifiers
 
-	/**
-	 * @notice This modifier is used to restrict the execution of functions based on the version of the contract.
-	 * @dev This modifier uses the {_getInitializedVersion} function to check the version of the contract. If the version
-	 * does not matches the provided version, it reverts with the error message `OnlyVersion`.
-	 * @param _version The version to compare with the initialized version.
-	 */
-	modifier onlyVersion(uint8 _version) virtual {
-		if (_getInitializedVersion() != _version) {
-			revert LibErrors.OnlyVersion(_version);
-		}
-		_;
-	}
+    /**
+     * @notice This modifier is used to restrict the execution of functions based on the version of the contract.
+     * @dev This modifier uses the {_getInitializedVersion} function to check the version of the contract. If the version
+     * does not matches the provided version, it reverts with the error message `OnlyVersion`.
+     * @param _version The version to compare with the initialized version.
+     */
+    modifier onlyVersion(uint8 _version) virtual {
+        if (_getInitializedVersion() != _version) {
+            revert LibErrors.OnlyVersion(_version);
+        }
+        _;
+    }
 
-	/// functions
+    /// functions
 
-	/**
-	 * @notice This function configures the Allow List contract with the initial state and granting
-	 * privileged roles.
-	 *
-	 * @dev This function uses the {AccessListUpgradeable.__AccessList_init} function to grant roles.
-	 *
-	 * Calling Conditions:
-	 *
-	 * - Can only be invoked once (controlled via the {reinitializer} modifier).
-	 * - The contract must be initialized with the version 1 logic.
-	 *
-	 * @param trustedForwarder The address of the trusted forwarder.
-	 */
-	function initializeV2(address trustedForwarder) external virtual onlyVersion(1) reinitializer(2) {
-		__ERC2771ContextInitializableUpgradeable_init(trustedForwarder);
-	}
+    /**
+     * @notice This function configures the Allow List contract with the initial state and granting
+     * privileged roles.
+     *
+     * @dev This function uses the {AccessListUpgradeable.__AccessList_init} function to grant roles.
+     *
+     * Calling Conditions:
+     *
+     * - Can only be invoked once (controlled via the {reinitializer} modifier).
+     * - The contract must be initialized with the version 1 logic.
+     *
+     * @param trustedForwarder The address of the trusted forwarder.
+     */
+    function initializeV2(address trustedForwarder) external virtual onlyVersion(1) reinitializer(2) {
+        __ERC2771ContextInitializableUpgradeable_init(trustedForwarder);
+    }
 
-	/**
-	 * @notice The multicall function has been intentionally disabled to prevent use with gasless operations.
-	 *
-	 * @dev OpenZeppelin library needs to be upgraded to V4.9.5 or higher if you consider using multicall along with
-	 * gasless feature.
-	 * @custom:deprecated This function is deprecated and should not be used.
-	 */
-	function multicall(bytes[] calldata) external virtual override returns (bytes[] memory) {
-		revert LibErrors.FunctionDisabled();
-	}
+    /**
+     * @notice The multicall function has been intentionally disabled to prevent use with gasless operations.
+     *
+     * @dev OpenZeppelin library needs to be upgraded to V4.9.5 or higher if you consider using multicall along with
+     * gasless feature.
+     * @custom:deprecated This function is deprecated and should not be used.
+     */
+    function multicall(bytes[] calldata) external virtual override returns (bytes[] memory) {
+        revert LibErrors.FunctionDisabled();
+    }
 
-	/**
-	 * @notice This is a function that applies any validations required to update the trusted forwarder.
-	 *
-	 * @dev Reverts when the caller does not have the "CONTRACT_ADMIN_ROLE".
-	 *
-	 * Calling Conditions:
-	 *
-	 * - Only the "CONTRACT_ADMIN_ROLE" can execute.
-	 * - {DenyListV2} is not paused.
-	 */
-	function _authorizeTrustedForwarderUpdate() internal virtual override whenNotPaused onlyRole(CONTRACT_ADMIN_ROLE) {}
+    /**
+     * @notice This is a function that applies any validations required to update the trusted forwarder.
+     *
+     * @dev Reverts when the caller does not have the "CONTRACT_ADMIN_ROLE".
+     *
+     * Calling Conditions:
+     *
+     * - Only the "CONTRACT_ADMIN_ROLE" can execute.
+     * - {DenyListV2} is not paused.
+     */
+    function _authorizeTrustedForwarderUpdate() internal virtual override whenNotPaused onlyRole(CONTRACT_ADMIN_ROLE) {}
 
-	/**
-	 * @notice This function is used to retrieve the sender of the transaction.
-	 * @dev This function is an override of the logic provided by {ContextUpgradeable} function. Instead it uses the
-	 * {ERC2771ContextUpgradeable}.{_msgSender} function to retrieve the sender.
-	 * @return The address of the sender.
-	 */
-	function _msgSender()
-		internal
-		view
-		virtual
-		override(ContextUpgradeable, ERC2771ContextUpgradeable)
-		returns (address)
-	{
-		return ERC2771ContextUpgradeable._msgSender();
-	}
+    /**
+     * @notice This function is used to retrieve the sender of the transaction.
+     * @dev This function is an override of the logic provided by {ContextUpgradeable} function. Instead it uses the
+     * {ERC2771ContextUpgradeable}.{_msgSender} function to retrieve the sender.
+     * @return The address of the sender.
+     */
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (address)
+    {
+        return ERC2771ContextUpgradeable._msgSender();
+    }
 
-	/**
-	 * @notice This function is used to retrieve the data of the transaction.
-	 * @dev This function is an override of the logic provided by {ContextUpgradeable} function. Instead it uses the
-	 * {ERC2771ContextUpgradeable}.{_msgData} function to retrieve the data.
-	 * @return The data of the transaction.
-	 */
-	function _msgData()
-		internal
-		view
-		virtual
-		override(ContextUpgradeable, ERC2771ContextUpgradeable)
-		returns (bytes calldata)
-	{
-		return ERC2771ContextUpgradeable._msgData();
-	}
+    /**
+     * @notice This function is used to retrieve the data of the transaction.
+     * @dev This function is an override of the logic provided by {ContextUpgradeable} function. Instead it uses the
+     * {ERC2771ContextUpgradeable}.{_msgData} function to retrieve the data.
+     * @return The data of the transaction.
+     */
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        return ERC2771ContextUpgradeable._msgData();
+    }
 
-	/**
-	 * @notice This function returns the byte length of the {ERC2771} context suffix appended to `msg.data`.
-	 * @dev Override required because both {ContextUpgradeable} and {ERC2771ContextUpgradeable} define this
-	 * function (OpenZeppelin 4.9.6+). It defers to the {ERC2771ContextUpgradeable} implementation.
-	 * @return The length in bytes of the context suffix.
-	 */
-	function _contextSuffixLength()
-		internal
-		view
-		virtual
-		override(ContextUpgradeable, ERC2771ContextUpgradeable)
-		returns (uint256)
-	{
-		return ERC2771ContextUpgradeable._contextSuffixLength();
-	}
+    /**
+     * @notice This function returns the byte length of the {ERC2771} context suffix appended to `msg.data`.
+     * @dev Override required because both {ContextUpgradeable} and {ERC2771ContextUpgradeable} define this
+     * function (OpenZeppelin 4.9.6+). It defers to the {ERC2771ContextUpgradeable} implementation.
+     * @return The length in bytes of the context suffix.
+     */
+    function _contextSuffixLength()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (uint256)
+    {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
 }
