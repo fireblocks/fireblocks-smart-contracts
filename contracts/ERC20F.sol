@@ -663,9 +663,15 @@ contract ERC20F is
      * distinguishable from an unset slot. This is the single writer of the decimals value; there is no public
      * setter, so the value is immutable after {initialize}.
      *
+     * Calling Conditions:
+     *
+     * - Can only be invoked from within an initializer or reinitializer (enforced via the {onlyInitializing}
+     *   modifier). Any call outside of an initialization context reverts, making the write-once guarantee
+     *   compiler-enforced rather than upheld only by convention.
+     *
      * @param decimals_ The number of decimals to configure.
      */
-    function _setDecimals(uint8 decimals_) internal virtual {
+    function _setDecimals(uint8 decimals_) internal virtual onlyInitializing {
         _getERC20FStorage().decimalsPlusOne = decimals_ + 1;
     }
 
