@@ -640,13 +640,12 @@ contract ERC20F is
     }
 
     /**
-     * @notice This function returns the number of decimals used to get the user representation of the token.
-     *
      * @dev Overrides {ERC20Upgradeable.decimals} to return the value configured at {initialize} rather than the
-     * fixed default of 18. Reverts with {LibErrors.InvalidDecimals} when the value has never been set, which
-     * cannot occur for a token deployed through {initialize}.
+     * fixed default of 18. Reverts with {LibErrors.InvalidDecimals} when the namespaced `decimalsPlusOne` slot has
+     * never been written.
      *
-     * @return The configured number of decimals.
+     * Off-chain metadata consumers that read the implementation address directly (instead of
+     * the proxy) will see this revert by design; an initialized proxy should be queried instead.
      */
     function decimals() public view virtual override returns (uint8) {
         uint8 decimalsPlusOne = _getERC20FStorage().decimalsPlusOne;
