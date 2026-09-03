@@ -49,6 +49,8 @@ import {ERC2771ContextInitializableUpgradeable} from "../library/MetaTx/ERC2771C
  *
  * The ERC20F Token contract can utilize an Access Registry contract to retrieve information on whether an account
  * is authorized to interact with the system.
+ *
+ * @custom:security-contact support@fireblocks.com
  */
 contract ERC20FGasless is ERC20F, ERC2771ContextInitializableUpgradeable {
     /// Functions
