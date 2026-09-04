@@ -19,6 +19,8 @@ pragma solidity ^0.8.29;
  * @title Errors Library
  * @author Fireblocks
  * @notice The Errors Library provides error messages for the Fireblocks ecosystem of smart contracts.
+ *
+ * @custom:security-contact support@fireblocks.com
  */
 library LibErrors {
     /// Errors

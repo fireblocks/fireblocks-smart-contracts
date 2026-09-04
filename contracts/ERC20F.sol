@@ -70,6 +70,8 @@ import {RoleAccessUpgradeable} from "./library/Utils/RoleAccessUpgradeable.sol";
  *
  * The ERC20F Token contract can utilize an Access Registry contract to retrieve information on whether an account
  * is authorized to interact with the system.
+ *
+ * @custom:security-contact support@fireblocks.com
  */
 contract ERC20F is
     Initializable,
