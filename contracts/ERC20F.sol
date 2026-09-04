@@ -477,6 +477,7 @@ contract ERC20F is
      * @dev Calling Conditions:
      *
      * - {ERC20F} is not paused. (checked internally by {_beforeTokenTransfer})
+     * - The caller (spender) is allowed to move tokens.
      * - The `from` is allowed to send tokens.
      * - The `to` is allowed to receive tokens.
      * - `from` is a non-zero address. (checked internally by {ERC20Upgradeable}.{_transfer})
@@ -491,6 +492,7 @@ contract ERC20F is
      * @return True if the function was successful.
      */
     function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
+        _requireHasAccess(_msgSender(), true);
         _requireHasAccess(from, true);
         _requireHasAccess(to, false);
         return super.transferFrom(from, to, amount);
