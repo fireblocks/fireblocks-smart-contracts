@@ -8,17 +8,16 @@ Welcome to the Fireblocks Smart Contracts repository. This repository is built u
 
 - [Overview](#overview)
 - [Smart Contracts](#smart-contracts)
-  - [ERC20F](#erc20f) (⚠️ in audit process)
+  - [ERC20F](#erc20f)
+  - [ERC20F with Configurable Decimals](#erc20f-with-configurable-decimals)
   - [ERC721F](#erc721f)
   - [ERC1155F](#erc1155f)
   - [Allowlist](#allowlist)
   - [Denylist](#denylist)
   - [VestingVault](#vestingvault)
-  - [UUPS Proxy](#uups-proxy)
-  - [Trusted Forwarder](#trusted-forwarder)
   - [Fungible LayerZero Adapter](#fungible-layerzero-adapter)
 - [Gasless Variants](#gasless-variants)
-- [Gasless Upgrades](#gasless-upgrades)
+  - [Trusted Forwarder](#trusted-forwarder)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Setup](#setup)
@@ -42,12 +41,13 @@ Each contract uses the [UUPS proxy pattern](https://eips.ethereum.org/EIPS/eip-1
 
 ## Smart Contracts
 
-### [ERC20F](./contracts/ERC20F.sol)
+Each contract is released under a Git tag that matches its audited version. The code on `main` may include changes made after these audits, so always deploy from the release tag listed for each contract.
 
-> [!WARNING]
-> **Audit in Progress**
->
-> This contract is currently undergoing a security audit and is **not suitable for production use** until the audit is complete. For the latest audited version, see [ERC20F.sol at commit `f6a65729a1d25f7aee0a93f2abc1b431dc38a139`](https://github.com/fireblocks/fireblocks-smart-contracts/blob/f6a65729a1d25f7aee0a93f2abc1b431dc38a139/contracts/ERC20F.sol).
+### [ERC20F](https://github.com/fireblocks/fireblocks-smart-contracts/blob/v1.0.0/contracts/ERC20F.sol)
+
+**Latest Release:** [`v1.0.0`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0)
+
+The original upgradeable ERC-20 token template, with a fixed 18 decimals and allowlist/denylist access control for transfers. Use this release for all existing live ERC20F tokens and their upgrades.
 
 An upgradeable ERC-20 token template for:
 
@@ -56,7 +56,22 @@ An upgradeable ERC-20 token template for:
 - Supporting tokenized fundraising
 - Recovering funds from blacklisted accounts
 
+### [ERC20F with Configurable Decimals](https://github.com/fireblocks/fireblocks-smart-contracts/blob/v2.0.0-erc20f-configurable-decimals/contracts/ERC20F.sol)
+
+**Latest Release:** [`v2.0.0-erc20f-configurable-decimals`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v2.0.0-erc20f-configurable-decimals)
+
+A new version of ERC20F for new token issuance. It builds on ERC20F v1.0.0 and adds:
+
+- Configurable decimals (0–18), set once at deployment
+- Burner role granted at deployment
+- Access-list checks on the spender in `transferFrom`
+
+> [!IMPORTANT]
+> **For new issuance only.** This version is not meant to be an upgrade of ERC20F v1.0.0. It is not upgrade-compatible with v1.0.0: never upgrade an existing live ERC20F token to this release.
+
 ### [ERC721F](./contracts/ERC721F.sol)
+
+**Latest Release:** [`v1.0.0`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0)
 
 An upgradeable ERC-721 token template for:
 
@@ -66,6 +81,8 @@ An upgradeable ERC-721 token template for:
 
 ### [ERC1155F](./contracts/ERC1155F.sol)
 
+**Latest Release:** [`v1.0.0`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0)
+
 An upgradeable ERC-1155 token template for:
 
 - Representing semi-fungible tokens (SFTs)
@@ -73,6 +90,8 @@ An upgradeable ERC-1155 token template for:
 - Reducing deployment costs
 
 ### [AllowList](./contracts/library/AccessRegistry/AllowList.sol)
+
+**Latest Release:** [`v1.0.0`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0)
 
 A utility contract for managing access control via an allowlist of approved addresses. Supports:
 
@@ -82,6 +101,8 @@ A utility contract for managing access control via an allowlist of approved addr
 
 ### [DenyList](./contracts/library/AccessRegistry/DenyList.sol)
 
+**Latest Release:** [`v1.0.0`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0)
+
 A utility contract for managing access control via a denylist of restricted addresses. Supports:
 
 - Integration with Fireblocks ERC-20F, ERC-721F, and ERC-1155F contracts
@@ -89,6 +110,8 @@ A utility contract for managing access control via a denylist of restricted addr
 - Upgradeability via the UUPS proxy pattern
 
 ### [VestingVault](./contracts/vaults/VestingVault.sol)
+
+**Latest Release:** [`v1.0.0-vesting-vault`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0-vesting-vault)
 
 A non-upgradeable contract for managing token vesting schedules with:
 
@@ -98,15 +121,9 @@ A non-upgradeable contract for managing token vesting schedules with:
 - Schedule cancellation with pro-rated vesting up to cancellation time
 - Role-based access control with VESTING_ADMIN and FORFEITURE_ADMIN roles
 
-### [UUPS Proxy](./contracts/library/Proxy/Proxy.sol)
-
-Provides upgradeable functionality for all smart contracts using the UUPS proxy pattern, ensuring flexibility and forward compatibility.
-
-### [Trusted Forwarder](./contracts/gasless-contracts/TrustedForwarder.sol)
-
-Enables seamless meta-transactions, supporting off-chain signing and gasless interactions with Fireblocks token contracts.
-
 ### [Fungible LayerZero Adapter](./contracts/bridge-adapter/FungibleLayerZeroAdapter.sol)
+
+**Release:** [`v1.0.0-layerzero-adapter`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0-layerzero-adapter)
 
 An adapter for integrating ERC20 tokens with LayerZero, enabling cross-chain fungible token transfers.
 
@@ -114,9 +131,11 @@ An adapter for integrating ERC20 tokens with LayerZero, enabling cross-chain fun
 
 ## Gasless Variants
 
+**Release:** [`v1.0.0-gasless`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0-gasless)
+
 This repository also includes **gasless versions** via the following contracts:
 
-- [ERC20FGasless](./contracts/gasless-contracts/ERC20FGasless.sol) (⚠️ in audit process)
+- [ERC20FGasless](./contracts/gasless-contracts/ERC20FGasless.sol) (for the version with configurable decimals, latest release is the same as [ERC20F with Configurable Decimals](#erc20f-with-configurable-decimals))
 - [ERC721FGasless](./contracts/gasless-contracts/ERC721FGasless.sol)
 - [ERC1155FGasless](./contracts/gasless-contracts/ERC1155FGasless.sol)
 - [AllowlistGasless](./contracts/gasless-contracts/AccessRegistry/AllowListGasless.sol)
@@ -124,22 +143,13 @@ This repository also includes **gasless versions** via the following contracts:
 
 These variants use the ERC2771 standard and allow users to perform transactions without requiring them to pay gas fees, enhancing usability and accessibility.
 
-> [!WARNING]
-> **Audit in Progress: ERC20FGasless**
->
-> [ERC20FGasless](./contracts/gasless-contracts/ERC20FGasless.sol) is currently undergoing a security audit and is **not suitable for production use** until the audit is complete. For the latest audited version, see [ERC20FGasless.sol at commit `f6a65729a1d25f7aee0a93f2abc1b431dc38a139`](https://github.com/fireblocks/fireblocks-smart-contracts/blob/f6a65729a1d25f7aee0a93f2abc1b431dc38a139/contracts/gasless-contracts/ERC20FGasless.sol).
+To move contracts you have already deployed to a gasless variant, see [Gasless Upgrades](./contracts/gasless-upgrades/README.md).
 
----
+### [Trusted Forwarder](./contracts/gasless-contracts/TrustedForwarder.sol)
 
-## Gasless Upgrades
+**Release:** [`v1.0.0-gasless`](https://github.com/fireblocks/fireblocks-smart-contracts/releases/tag/v1.0.0-gasless)
 
-Additionally, this repository provides contracts for upgrading from the standard contracts to the gasless variants (If you have already deployed the standard contracts):
-
-- [ERC20FV2](./contracts/gasless-upgrades/ERC20FV2.sol)
-- [ERC721FV2](./contracts/gasless-upgrades/ERC721FV2.sol)
-- [ERC1155FV2](./contracts/gasless-upgrades/ERC1155FV2.sol)
-- [AllowlistV2](./contracts/gasless-upgrades/AccessRegistry/AllowListV2.sol)
-- [DenylistV2](./contracts/gasless-upgrades/AccessRegistry/DenyListV2.sol)
+Enables seamless meta-transactions, supporting off-chain signing and gasless interactions with Fireblocks token contracts.
 
 ---
 
@@ -168,13 +178,6 @@ npx hardhat compile
 ### Verify
 
 Verify, dont trust. Always make sure your deployed bytecode matches the bytecode in the [artifacts](./artifacts/) directory
-
-## Audits
-
-- [Fireblocks ERC20 Audit](./audits/Fireblocks%20ERC20%20Audit.pdf)
-- [Fireblocks ERC721 Audit](./audits/Fireblocks%20ERC721%20Audit.pdf)
-- [Fireblocks ERC1155 Audit](./audits/Fireblocks%20ERC1155%20Audit.pdf)
-- [Gasless Audit from OpenZeppelin](./audits/Fireblocks%20Gasless%20Contracts%20Audit.pdf)
 
 ## Security
 
