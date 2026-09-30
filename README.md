@@ -15,10 +15,9 @@ Welcome to the Fireblocks Smart Contracts repository. This repository is built u
   - [Allowlist](#allowlist)
   - [Denylist](#denylist)
   - [VestingVault](#vestingvault)
-  - [UUPS Proxy](#uups-proxy)
-  - [Trusted Forwarder](#trusted-forwarder)
   - [Fungible LayerZero Adapter](#fungible-layerzero-adapter)
 - [Gasless Variants](#gasless-variants)
+  - [Trusted Forwarder](#trusted-forwarder)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Setup](#setup)
@@ -183,4 +182,3 @@ Verify, dont trust. Always make sure your deployed bytecode matches the bytecode
 ## Security
 
 - [Security Policy](./SECURITY.md)
-
